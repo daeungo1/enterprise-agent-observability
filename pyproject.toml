@@ -1,0 +1,32 @@
+[project]
+name = "otel-langfuse"
+version = "1.0.0"
+description = "Teacher-Student Quiz System with LangGraph and OpenTelemetry"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "langgraph>=0.2.0",
+    "langchain-openai>=0.2.0",
+    "langchain-core>=0.3.0",
+    "python-dotenv>=1.0.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+    "opentelemetry-instrumentation-fastapi>=0.41b0",
+    "traceloop-sdk>=0.30.0",
+    # Azure AI Evaluation
+    "azure-ai-evaluation>=1.0.0",
+    "azure-monitor-query>=1.2.0",
+    "azure-identity>=1.15.0",
+    # Azure AI Content Safety
+    "azure-ai-contentsafety>=1.0.0",
+    "opencensus-ext-azure>=1.1.15",
+]
+
+[project.scripts]
+start = "uvicorn main:app --host 0.0.0.0 --port 8000"
+
+[tool.uv]
+dev-dependencies = []

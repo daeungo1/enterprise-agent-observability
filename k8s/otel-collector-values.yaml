@@ -1,0 +1,89 @@
+# OpenTelemetry Collector Helm Values for Langfuse Integration
+mode: deployment
+
+# 이미지 설정
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+# 리소스 설정
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# 서비스 설정
+service:
+  type: LoadBalancer
+
+# 포트 설정
+ports:
+  otlp:
+    enabled: true
+    containerPort: 4317
+    servicePort: 4317
+    hostPort: 4317
+    protocol: TCP
+  otlp-http:
+    enabled: true
+    containerPort: 4318
+    servicePort: 4318
+    hostPort: 4318
+    protocol: TCP
+
+# Collector 설정
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+          cors:
+            allowed_origins:
+              - "*"
+            allowed_headers:
+              - "*"
+
+  processors:
+    batch:
+      timeout: 5s
+      send_batch_size: 256
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 400
+      spike_limit_mib: 100
+    # Attribute 길이 제한 해제
+    transform:
+      trace_statements:
+        - context: span
+          statements: []
+
+  exporters:
+    debug:
+      verbosity: detailed
+    
+    # Langfuse OTLP Exporter
+    otlphttp/langfuse:
+      endpoint: "http://langfuse-web.langfuse.svc.cluster.local:3000/api/public/otel"
+      headers:
+        Authorization: "Basic cGstbGYtYjZkMDllMjgtMDY2ZS00NTg0LWFlY2YtMjdkZjM1NzJjMDAyOnNrLWxmLTE0NTE4MjVlLTA4MGYtNDQzOS1iNjJiLTk0NDcwZjdhMmExMA=="
+      compression: gzip
+    
+    # Azure Application Insights Exporter
+    azuremonitor:
+      connection_string: "InstrumentationKey=56c485f0-01ca-4a40-ab82-c2aa434b5880;IngestionEndpoint=https://eastus2-3.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus2.livediagnostics.monitor.azure.com/;ApplicationId=10f4275f-a278-41a9-a808-f46d1ab54aca"
+
+  service:
+    # Telemetry 설정 - attribute 길이 제한 늘리기
+    telemetry:
+      logs:
+        level: info
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [debug, otlphttp/langfuse, azuremonitor]
