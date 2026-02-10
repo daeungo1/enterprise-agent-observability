@@ -7,14 +7,14 @@
 - FastAPI를 사용하여 웹 서버 구축
 - Azure OpenAI (GPT-4o) 사용
 
-## 아키텍처
+## Architecture
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph App["LangGraph App"]
-        FastAPI["FastAPI Server\n:8000"]
+        FastAPI["FastAPI Server :8000"]
         LangGraph["LangGraph\nTeacher-Student"]
         Traceloop["Traceloop SDK"]
-        AzureOAI["Azure OpenAI\nGPT-4o"]
+        AzureOAI["Azure OpenAI GPT-4o"]
         
         FastAPI --> LangGraph
         LangGraph --> AzureOAI
@@ -22,29 +22,30 @@ flowchart LR
     end
     
     subgraph K8s["Kubernetes"]
-        OTelCollector["OTel Collector\n:4317"]
+        OTelCollector["OTel Collector :4317"]
         Langfuse["Langfuse"]
     end
     
-    subgraph Azure["Azure"]
+    subgraph Observability["Azure Observability"]
         AppInsights["Application Insights"]
         Grafana["Managed Grafana"]
-        AIEval["Azure AI Evaluation\n(Fluency, QA)"]
-        ContentSafety["Azure AI Content Safety\n(Violence, Sexual, etc.)"]
     end
     
     subgraph Evaluation["Evaluation Pipeline"]
         EvalScript["evaluation.py"]
+        AIEval["Azure AI Evaluation\n(Fluency, QA)"]
+        ContentSafety["Azure AI Content Safety\n(Violence, Sexual, etc.)"]
     end
     
     Traceloop -->|OTLP/gRPC| OTelCollector
     OTelCollector -->|OTLP/HTTP| Langfuse
     OTelCollector -->|OTLP/HTTP| AppInsights
-    AppInsights --> Grafana
-    AppInsights -->|Query Traces\nAppDependencies| EvalScript
-    EvalScript -->|Quality Eval| AIEval
-    EvalScript -->|Safety Eval| ContentSafety
-    EvalScript -->|Results| AppInsights
+    Langfuse -.->|Same Traces| AppInsights
+    AppInsights -->|Traces + Eval Results| Grafana
+    AppInsights -->|Query Traces| EvalScript
+    EvalScript -->|Quality| AIEval
+    EvalScript -->|Safety| ContentSafety
+    EvalScript -->|Store Results| AppInsights
 ```
 
 ## 프로젝트 구조

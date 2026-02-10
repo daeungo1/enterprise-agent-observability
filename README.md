@@ -2,36 +2,49 @@
 
 LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collector**를 통해 LLM observability 데이터를 Langfuse로 전송합니다.
 
-## 🏗️ 아키텍처
+## 🏗️ Architecture
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│  LangGraph  │────▶│ OTel         │────▶│   Langfuse   │
-│  (FastAPI)  │     │ Collector    │     │   (K8s)      │
-│ + Traceloop │     │   (K8s)      │     │              │
+│  LangGraph  │────▶│    OTel      │────▶│   Langfuse   │
+│  (FastAPI)  │     │  Collector   │     │    (K8s)     │
+│ + Traceloop │     │    (K8s)     │     │              │
 └─────────────┘     └──────────────┘     └──────────────┘
       OTLP/gRPC          OTLP/HTTP              │
                               │                 │
                               ▼                 │
                     ┌──────────────┐            │
-                    │    Azure     │            │
-                    │ Application  │◀───────────┘
-                    │  Insights    │   (동일 트레이스)
-                    └──────────────┘
-                              │
-                              ▼
-                    ┌──────────────┐
-                    │    Azure     │
-                    │   Managed    │
-                    │   Grafana    │
-                    └──────────────┘
+                    │    Azure     │◀───────────┘
+                    │ Application  │   (Same Traces)
+                    │   Insights   │◀──────────────────────┐
+                    └──────────────┘                       │
+                         │    │                            │
+            ┌────────────┘    └────────────┐               │
+            ▼                              ▼               │
+┌──────────────────┐            ┌──────────────────┐       │
+│  Azure Managed   │            │   Evaluation     │───────┘
+│     Grafana      │            │    Pipeline      │  (Results)
+│   (Dashboard)    │            │  (evaluation.py) │
+└──────────────────┘            └──────────────────┘
+        ▲                              │    │
+        │                 ┌────────────┘    └────────────┐
+        │                 ▼                              ▼
+        │      ┌──────────────────┐         ┌──────────────────┐
+        │      │ Azure AI Eval SDK│         │Azure AI Content  │
+        │      │  (Fluency, QA)   │         │     Safety       │
+        │      └──────────────────┘         └──────────────────┘
+        │
+   Traces + Eval Results
 ```
 
-- **Traceloop SDK**: LangChain/OpenAI 호출을 자동 계측하여 LLM input/output 캡처
-- **OTel Collector**: 트레이스를 Langfuse와 Azure Application Insights로 동시 전달
-- **Langfuse**: LLM observability 대시보드
-- **Azure Application Insights**: 트레이스 저장소
-- **Azure Managed Grafana**: 커스텀 대시보드 시각화
+- **Traceloop SDK**: Auto-instrument LangChain/OpenAI calls to capture LLM input/output
+- **OTel Collector**: Forward traces to Langfuse and Azure Application Insights simultaneously
+- **Langfuse**: LLM observability dashboard
+- **Azure Application Insights**: Trace storage & query
+- **Azure Managed Grafana**: Custom dashboard visualization
+- **Evaluation Pipeline**: Automated quality & safety evaluation
+  - **Azure AI Evaluation SDK**: Fluency, Coherence, Relevance, Groundedness
+  - **Azure AI Content Safety**: Violence, Sexual, SelfHarm, Hate detection
 
 ## 📁 프로젝트 구조
 
