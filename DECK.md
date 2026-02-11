@@ -13,7 +13,7 @@
 | 5 | Live Demo | 5 min |
 | 6 | Q&A | 5 min |
 
-(Thanks everyone for joining. I'm excited to share what we've been building — a complete end-to-end observability story for LLM agent applications, combining OpenTelemetry, Langfuse, and Azure services into a single cohesive stack. We'll cover the why, the how, and a live demo in about 30 minutes, with time for Q&A at the end. Let's dive in.)
+(Thanks for joining. Today we're covering end-to-end observability for LLM agent apps — OpenTelemetry, Langfuse, and Azure services in one stack. About 30 minutes including Q&A. Let's dive in.)
 
 ---
 
@@ -29,7 +29,7 @@ LLM-based apps are fundamentally different from traditional apps:
 - **Cost & performance tracking**: Token usage and latency need monitoring
 - **Safety**: Must automatically detect harmful content generation
 
-(So let's start with the fundamental question — why do we need a different observability approach for LLM applications? We all know traditional APM. It tracks HTTP status codes, latency, error rates — and it does that really well. But here's the gap: a 200 OK tells you nothing about whether your agent actually gave a good answer. LLM apps are non-deterministic by nature — the same prompt produces different outputs every time. When you chain multiple agents together, the execution becomes a black box. And on top of that, you need to track token costs, measure response quality, and ensure content safety — all simultaneously. This is a fundamentally different monitoring challenge.)
+(Why a different observability approach for LLMs? Traditional APM tracks status codes and latency — but a 200 OK tells you nothing about whether your agent gave a good answer. LLM apps are non-deterministic, multi-agent chains are black boxes, and you need to track token costs, quality, and safety simultaneously. Fundamentally different monitoring challenge.)
 
 ### What This Project Solves
 
@@ -48,7 +48,7 @@ LLM-based apps are fundamentally different from traditional apps:
 | **Quality** | Auto-evaluate response quality | Azure AI Evaluation SDK |
 | **Safety** | Auto-detect harmful content | Azure AI Content Safety |
 
-(What we built addresses this with three pillars. First, tracing — to capture exactly what happened at the LLM call level. Second, dashboards — to visualize operational and quality metrics in real time. And third, automated evaluation — to programmatically score every response for quality and safety. The key insight here is that all three pillars feed into a unified Azure-native observability stack. Let me walk you through how each piece fits together.)
+(We address this with three pillars: tracing to capture what happened, dashboards to visualize it in real time, and automated evaluation to score quality and safety. All three feed into a unified Azure-native stack. Let me show you how.)
 
 ---
 
@@ -66,7 +66,7 @@ User input: "medium math"
   └─────────┘           GPT-4o                  GPT-4o                  GPT-4o
 ```
 
-(Before we get into the observability stack, let me set the stage with the demo application. We built a multi-agent quiz system using LangGraph — it's intentionally simple, but representative of real-world agent patterns. There are four nodes in the graph. Setup parses the user's requested difficulty and subject. Then the Teacher agent creates a question, the Student agent attempts to answer it, and the Teacher evaluates the result. The important thing to note is that three of these nodes each make an independent GPT-4o call — so per user request, we're looking at three separate LLM invocations that we need to trace and evaluate.)
+(Quick intro to the demo app — a multi-agent quiz system built with LangGraph. Four nodes: Setup parses difficulty and subject, Teacher creates a question, Student answers, Teacher evaluates. Three of these make independent GPT-4o calls — so per request, three LLM invocations to trace and evaluate.)
 
 ### LangGraph Workflow (graph.py)
 
@@ -97,7 +97,7 @@ SETUP → QUESTIONING → ANSWERING → EVALUATING → COMPLETE
   └──────────────── "reset" ────────────────────────┘
 ```
 
-(Here's the actual LangGraph code — and it's remarkably concise. The key design point is the conditional edge after setup. If the user didn't provide valid difficulty and subject, we route back to END and prompt them again. Otherwise, it flows linearly: Teacher asks, Student answers, Teacher evaluates. It's a simple but realistic pattern — and more importantly, it gives us a great testbed for observability because we can trace each node independently and evaluate the quality of each LLM interaction.)
+(The actual LangGraph code — remarkably concise. Conditional edge after setup: invalid input routes to END, otherwise linear flow — Teacher asks, Student answers, Teacher evaluates. Simple pattern, but great testbed for observability since we trace and evaluate each node independently.)
 
 ### Live Demo Points
 - Open http://localhost:8000
@@ -134,7 +134,7 @@ SETUP → QUESTIONING → ANSWERING → EVALUATING → COMPLETE
                         └────────────────────┘
 ```
 
-(Now let's look at the full architecture — this is where it gets interesting. On the left, our FastAPI application sends traces via OTLP gRPC to the OpenTelemetry Collector running in Kubernetes. The Collector is the key routing layer here — it fans out the same trace data to two destinations simultaneously. First, Langfuse via OTLP HTTP, which gives us a purpose-built LLM trace UI with prompt-level visibility. Second, Azure Application Insights via the Azure Monitor exporter, which gives us a KQL-queryable data store that integrates natively with our Azure ecosystem. Then, on a separate path, the evaluation pipeline queries those traces from App Insights, scores them for quality and safety using Azure AI services, and writes the results back to App Insights as custom events. Grafana sits on top, querying everything via KQL for a unified operational dashboard. The beauty of this design is that each component does one thing well, and App Insights acts as the central nervous system connecting tracing and evaluation.)
+(Here's the full architecture. The app sends OTLP gRPC to the OTel Collector in Kubernetes. The Collector fans out to two destinations: Langfuse via OTLP HTTP for LLM-specific trace UI, and App Insights via Azure Monitor exporter for KQL-queryable storage. Separately, the evaluation pipeline queries traces from App Insights, scores them using Azure AI services, and writes results back. Grafana queries everything via KQL. App Insights acts as the central nervous system connecting tracing and evaluation.)
 
 ### Logical Architecture
 
@@ -180,7 +180,7 @@ flowchart TB
     EvalScript -->|Store Results| AppInsights
 ```
 
-(This is the same architecture rendered as a logical flow diagram — I think it makes the subsystem boundaries clearer. Four distinct subsystems. Top-left: the LangGraph application, where FastAPI drives the agent workflow and Traceloop auto-instruments every LLM call. Center: the Kubernetes layer hosting the OTel Collector and Langfuse. Right: our Azure observability stack — App Insights and Managed Grafana. And at the bottom: the evaluation pipeline that closes the feedback loop. What I want you to take away from this diagram is the central role of App Insights — it receives trace data from the Collector, receives evaluation scores from both the real-time and batch pipelines, and feeds everything into Grafana. It's the single pane of glass for this entire system.)
+(Same architecture as a logical diagram — four subsystems. LangGraph app with Traceloop auto-instrumentation, Kubernetes hosting the Collector and Langfuse, Azure observability with App Insights and Grafana, and the evaluation pipeline closing the feedback loop. Key takeaway: App Insights is the single pane of glass — receiving traces and evaluation scores, feeding Grafana.)
 
 ### Data Flow Detail
 
@@ -193,7 +193,7 @@ flowchart TB
 | 5 | evaluation.py | App Insights | opencensus (customEvents) | Batch evaluation scores (quality + safety) |
 | 6 | App Insights | Grafana | KQL query | Traces + evaluation results visualization |
 
-(Let me walk through the data flow step by step — this is important for understanding the end-to-end latency and data freshness characteristics. Step 1: the application emits OTLP gRPC to the Collector — this happens in-process, sub-millisecond overhead. Steps 2 and 3 happen in parallel — the Collector fans out the same trace data to both Langfuse and App Insights using different exporters, so there's no additional latency to the app. Step 4 is where it gets interesting — this is the real-time background evaluation path. Every single chat request triggers eval_background.py, which scores quality and safety in a background thread and writes results to App Insights as custom events. Zero impact on user-facing latency. Step 5 is the batch evaluation pipeline — evaluation.py queries historical traces from App Insights via KQL, runs the same quality and safety evaluations in bulk, and writes aggregated scores back. This is designed for CI/CD or cron-based execution. And Step 6 is Grafana pulling everything together — traces, real-time scores, and batch scores — all via KQL queries for a unified operational dashboard.)
+(Step by step: Step 1 — app emits OTLP gRPC, sub-millisecond overhead. Steps 2-3 in parallel — Collector fans out to Langfuse and App Insights. Step 4 — real-time background evaluation per request, zero impact on latency. Step 5 — batch evaluation pipeline for historical analysis via CI/CD or cron. Step 6 — Grafana unifies traces and evaluation scores via KQL.)
 
 ### Why Use OTel Collector?
 
@@ -215,7 +215,7 @@ App → OTel Collector → Langfuse
 - Batch processing and memory limits handled by Collector
 - App only needs to know OTLP
 
-(This is a question I get a lot — why introduce the Collector as a middle layer? Why not just export directly from the application? The answer comes down to operational flexibility. With the Collector, your application speaks exactly one protocol — OTLP. That's it. The Collector handles the fan-out, the protocol translation, the batching, the retry logic, and the memory management. Want to add a third observability backend tomorrow? Update a YAML config and redeploy the Collector. Zero application code changes, zero redeployment of your app. This is the same pattern we recommend across Azure — decouple your telemetry pipeline from your application lifecycle.)
+(Why not export directly? With the Collector, your app speaks one protocol — OTLP. The Collector handles fan-out, batching, retries, and memory management. Want a third backend? Update a YAML config. Zero app code changes. Decouple your telemetry pipeline from your application lifecycle.)
 
 ### OTel Collector Config (k8s/otel-collector-values.yaml)
 
@@ -241,7 +241,7 @@ config:
         exporters: [otlphttp/langfuse, azuremonitor]  # Fan-out!
 ```
 
-(Here's the actual Collector configuration — and I want to call your attention to the pipeline definition at the bottom. One receiver, two exporters. That single block is what enables the entire fan-out architecture. The traces pipeline receives OTLP, runs it through memory limiter and batch processors, and exports simultaneously to Langfuse and Azure Monitor. One important note: we use the contrib distribution image because the Azure Monitor exporter is only available in the contrib build, not the core OpenTelemetry Collector.)
+(The pipeline definition at the bottom is the key — one receiver, two exporters. That's the entire fan-out. Note: we use the contrib image because the Azure Monitor exporter isn't in the core distribution.)
 
 ---
 
@@ -270,7 +270,7 @@ Traceloop.init(
 **Key point**: Traceloop SDK auto-instruments LangChain/OpenAI calls.
 Without any code changes, `gen_ai.prompt`, `gen_ai.completion`, and `llm.usage.total_tokens` are captured automatically.
 
-(Now let's look at the code. This is the entire instrumentation setup — and I think this is one of the most compelling parts. Three lines of meaningful code. We create an OTLP exporter pointing to the Collector, pass it to Traceloop.init, and we're done. From this point forward, every LangChain and OpenAI call in the application is automatically traced. Prompts, completions, token counts, latency — all captured with zero changes to business logic. This is the power of auto-instrumentation. The Traceloop SDK hooks into the LangChain and OpenAI libraries at the framework level, so you get full LLM observability out of the box.)
+(Three lines of meaningful code. OTLP exporter pointing to the Collector, pass it to Traceloop.init — done. Every LangChain and OpenAI call is automatically traced: prompts, completions, token counts, latency. Zero changes to business logic. That's the power of auto-instrumentation.)
 
 ### 4-2. Manual Span Enrichment (main.py - chat_stream)
 
@@ -292,7 +292,7 @@ with tracer.start_as_current_span("chat_stream") as span:
 
 **Key point**: Setting `langfuse.*` prefix attributes enables trace/session grouping in the Langfuse UI.
 
-(Auto-instrumentation gives us the LLM-level telemetry, but in production you also want business context — which user session is this, what was the original input, what was the final output. We achieve this by creating a manual span and enriching it with Langfuse-recognized attributes. The key here is the attribute naming convention: anything prefixed with `langfuse.` gets special treatment in the Langfuse UI. For example, `langfuse.session.id` groups all traces from the same user session together, giving you a conversation-level view. This is the pattern — auto-instrumentation for the heavy lifting, manual spans for business context.)
+(Auto-instrumentation handles LLM telemetry, but we also want business context. We create a manual span with Langfuse-recognized attributes — anything prefixed `langfuse.` gets special treatment in the UI. For example, `langfuse.session.id` groups traces by session. Pattern: auto-instrumentation for heavy lifting, manual spans for business context.)
 
 ### 4-3. Evaluation Pipeline (evaluation.py)
 
@@ -322,7 +322,7 @@ logger.info("evaluation_result", extra={"custom_dimensions": event_properties})
 # → Queryable via KQL in Grafana
 ```
 
-(The evaluation pipeline is where observability meets quality assurance. It's a four-step batch process. Step 1: query App Insights for recent LLM traces using KQL — we pull the actual prompts and completions from the AppDependencies table. Step 2: run four quality evaluators from the Azure AI Evaluation SDK — fluency, coherence, relevance, and groundedness — each producing a 1-to-5 score. Step 3: run Azure AI Content Safety to analyze every response for violence, hate speech, sexual content, and self-harm — scored on a 0-to-6 scale where 0 is safe. Step 4: write all scores back to App Insights as custom events. This is what closes the loop — now Grafana can show you not just what happened, but how well it performed.)
+(Four-step batch process. Step 1: query App Insights for LLM traces via KQL. Step 2: run four quality evaluators — fluency, coherence, relevance, groundedness — scored 1-to-5. Step 3: Azure Content Safety for violence, hate, sexual, self-harm — scored 0-to-6. Step 4: write scores back to App Insights as custom events. This closes the loop — Grafana shows not just what happened, but how well it performed.)
 
 ### 4-4. Real-time Background Evaluation (eval_background.py)
 
@@ -346,7 +346,7 @@ def evaluate_single(query: str, response: str) -> dict:
 
 **Key point**: Every chat response triggers evaluation automatically. No manual pipeline run needed for near real-time monitoring.
 
-(The batch pipeline is essential for historical analysis, but we asked ourselves — can we get evaluation scores in near real-time? That's what this module does. After the response is returned to the user, we spawn a background thread via asyncio.to_thread that runs the exact same quality and safety evaluations. The critical design choice here is that this is completely non-blocking — the user experiences zero additional latency. The event loop is free, the response has already been sent, and the evaluation runs asynchronously in a separate thread. Results appear in App Insights — and therefore in Grafana — within approximately five minutes. This gives you a continuous quality signal without any manual pipeline execution.)
+(Can we get evaluation scores in near real-time? After the response is sent, we spawn a background thread via asyncio.to_thread that runs quality and safety evaluations. Completely non-blocking — zero additional latency for the user. Results appear in Grafana within about five minutes. Continuous quality signal, no manual pipeline needed.)
 
 ### 4-5. Evaluation ↔ Observability Connection
 
@@ -363,7 +363,7 @@ evaluation.py ─────▶│ customEvents      │─────▶│ G
                                                └──────────────────┘
 ```
 
-(This diagram captures the key architectural insight of the entire system. App Insights serves as the central data store for both operational traces and evaluation results. The OTel Collector writes LLM traces to the AppDependencies table — that's automatic. The evaluation pipeline reads from that table via KQL, runs its scoring logic, and writes the results back to the customEvents table. Grafana then queries both tables to render a unified dashboard. Two different data flows, one data store, one dashboard. That's the simplicity we were aiming for.)
+(Key insight: App Insights is the central store for both traces and evaluation results. Collector writes to AppDependencies, evaluation pipeline writes to customEvents, Grafana queries both. Two data flows, one data store, one dashboard.)
 
 ---
 
@@ -384,9 +384,14 @@ uv run main.py
 - Teacher → Student → Teacher three-step execution
 - SSE streaming with per-node real-time responses
 
-(Alright, let's switch to the live demo. I'll open the app in the browser and type "medium math". Watch the three agents execute in sequence — Teacher creates a question, Student attempts to answer, Teacher evaluates. Each node streams its response in real-time via Server-Sent Events, so you can see the tokens arriving as they're generated. Behind the scenes, Traceloop is capturing every LLM call, and the background evaluator will score this interaction within minutes.)
+(Let's switch to the live demo. I'll type "medium math" — watch the three agents execute in sequence with real-time SSE streaming. Behind the scenes, Traceloop captures every LLM call and the background evaluator scores this interaction automatically.)
+
+![Quiz App Demo](static/quizapp.gif)
+![Quiz App & Tracing](static/otel_azuremonitor_with_langfuse.png)
 
 ### Demo 2: Traces in Langfuse
+
+![Langfuse Dashboard](static/langfuse_only.png)
 
 **What to observe:**
 - Click the `langgraph-session` trace
@@ -394,9 +399,11 @@ uv run main.py
 - Token usage and latency
 - Session-grouped conversation flow
 
-(Now let's switch to Langfuse and look at the traces. Here you can see the trace we just generated for that quiz session — it's grouped under the langgraph-session name we set in the manual span. Click into it and you get full visibility into each individual LLM call — the exact system prompt, the user message, the completion, token counts, and latency. All of this was captured automatically by Traceloop with zero code changes to our agent logic. This is the kind of prompt-level debugging visibility that traditional APM simply cannot provide.)
+(Here's Langfuse showing the trace for that quiz session — grouped under langgraph-session. Click in and you see each LLM call: exact prompt, completion, token counts, latency. All captured automatically by Traceloop. This is prompt-level debugging that traditional APM cannot provide.)
 
 ### Demo 3: Grafana Dashboard
+
+![Azure Managed Grafana Dashboard](static/azure_grafana.gif)
 
 **Grafana panels:**
 
@@ -410,7 +417,7 @@ uv run main.py
 | Safety Evaluation Scores | customEvents | Violence, Sexual, SelfHarm, HateUnfairness |
 | Score Trends | customEvents | Quality/safety score trends over time |
 
-(And here's the Grafana dashboard — this is where everything comes together. The top row gives you the operational overview from traces — total agent executions, LLM call counts, token consumption, and success rates. The middle section breaks it down by node — so you can see if the Teacher node is slower than the Student node, for example. And the bottom section shows the evaluation scores — quality metrics like fluency and coherence, safety scores across all four categories. Every single panel is powered by KQL queries against App Insights, which means you can customize or extend any of these with standard KQL. This is the unified view we were designing for — operations and quality in one place.)
+(Here's the Grafana dashboard — everything in one place. Top row: operational metrics — executions, LLM calls, tokens, success rates. Middle: node-level performance breakdown. Bottom: evaluation scores — quality and safety. All powered by KQL against App Insights, fully customizable.)
 
 ### Demo 4: Run Evaluation Pipeline
 
@@ -425,7 +432,7 @@ uv run python evaluation.py --hours 24 --limit 100
 - Safety scores (0-6 scale, 0 = safe)
 - Results appearing in Grafana
 
-(Finally, let me kick off the batch evaluation pipeline. This will query the last 24 hours of traces from App Insights, run all four quality evaluators and the content safety analysis, and push the scored results back to App Insights. In a production setting, you'd run this as a scheduled job — daily cron, or as part of your CI/CD pipeline. After a minute or two, you'll see the evaluation scores update in the Grafana dashboard. This is your quality regression detection mechanism.)
+(Let me kick off the batch evaluation. It queries 24 hours of traces, runs quality and safety analysis, pushes scores back to App Insights. In production, run this as a cron job or CI/CD step. Scores update in Grafana within minutes — your quality regression detection mechanism.)
 
 ---
 
@@ -443,7 +450,7 @@ uv run python evaluation.py --hours 24 --limit 100
 | **Quality Eval** | Azure AI Evaluation SDK | Fluency, Coherence, Relevance, Groundedness |
 | **Safety Eval** | Azure AI Content Safety | Violence, Sexual, SelfHarm, Hate detection |
 
-(Here's the full tech stack summarized in one table. Each architectural layer maps to a specific technology with a clear responsibility. The design principle throughout is separation of concerns — the app handles business logic, Traceloop handles instrumentation, the Collector handles routing, and Azure services handle storage, visualization, and evaluation. The key takeaway is that the OTel Collector is the decoupling layer — swap or add any backend without touching application code.)
+(Full tech stack in one table. Design principle: separation of concerns — app handles business logic, Traceloop handles instrumentation, Collector handles routing, Azure services handle storage and evaluation. OTel Collector is the decoupling layer.)
 
 ---
 
@@ -466,7 +473,7 @@ uv run python evaluation.py --hours 24 --limit 100
    - Enable `TRACELOOP_TRACE_CONTENT=true` (disabled by default)
    - Run evaluation as a batch job (CI/CD or cron)
 
-(Let me leave you with four takeaways. First — OpenTelemetry is not just for microservices. With Traceloop, it works beautifully for LLM applications, and you can reuse your existing OTel infrastructure — Collectors, App Insights, Grafana — without reinventing the wheel. Second — the OTel Collector is the architectural linchpin. It decouples your application from your observability backends and enables zero-code-change fan-out to multiple destinations. Third — and this is probably the most important one — tracing alone is necessary but not sufficient. You can see every prompt and completion, but that doesn't tell you if your agent is actually performing well. Automated quality and safety evaluation closes that gap and turns observability into actionable intelligence. And fourth — a few production gotchas to be aware of: increase the attribute length limit because LLM messages are much longer than typical span attributes, explicitly enable content capture in Traceloop, and run your evaluation pipeline on a schedule. Thank you — I'm happy to take questions, and the repo link will be shared in the chat.)
+(Four takeaways. First — OTel works for LLM apps too, reuse your existing infrastructure. Second — OTel Collector is the architectural linchpin for zero-code-change fan-out. Third — tracing alone isn't enough; automated quality and safety evaluation turns observability into actionable intelligence. Fourth — production gotchas: increase attribute length limits, enable content capture in Traceloop, run evaluation on a schedule. Thank you — happy to take questions.)
 
 ---
 
@@ -496,7 +503,7 @@ otel-langfuse/
     └── azure-grafana-langgraph.json   # Azure Managed Grafana dashboard (v2)
 ```
 
-(For anyone who wants to clone the repo and try it out, here's the full project structure. Five Python files at the top are the core of the system — main.py for the FastAPI server and OpenTelemetry setup, graph.py for the LangGraph agent workflow, eval_background.py for the real-time per-request evaluation, evaluation.py for the batch evaluation pipeline, and config.py for environment configuration. The k8s directory contains all the Helm values for deploying the OTel Collector and Langfuse, plus the Grafana dashboard JSON you can import directly.)
+(Full project structure for anyone who wants to clone the repo. Five core Python files at the top, k8s directory with Helm values and Grafana dashboard JSON you can import directly.)
 
 ---
 
@@ -514,7 +521,7 @@ otel-langfuse/
 | `AZURE_CONTENT_SAFETY_ENDPOINT` | Azure AI Content Safety endpoint |
 | `AZURE_CONTENT_SAFETY_KEY` | Azure AI Content Safety API key |
 
-(If you want to set this up in your own environment, here's the complete list of environment variables. You'll need your Azure OpenAI credentials, the OTel Collector endpoint, an App Insights connection for evaluation data, and optionally the Content Safety endpoint for safety scoring. Copy the env template, fill in your values, and you're ready to run.)
+(All the environment variables you need. Azure OpenAI credentials, OTel Collector endpoint, App Insights connection, and optionally Content Safety for safety scoring. Copy the env template and fill in your values.)
 
 ---
 
@@ -539,7 +546,7 @@ uv run python evaluation.py --hours 24 --limit 100
 
 **Requirements**: Python 3.10+, [uv](https://github.com/astral-sh/uv) package manager
 
-(Getting started is straightforward — three commands. uv sync installs all dependencies, then activate the venv and run main.py to start the server. For batch evaluation, run evaluation.py with your desired time window. Once the server is running, every chat request automatically triggers background evaluation through eval_background.py — no additional setup required. We use uv as the package manager here — if you haven't tried it yet, it's worth checking out. Dependency resolution is dramatically faster than pip.)
+(Three commands to get started: uv sync, activate venv, run main.py. Background evaluation runs automatically per request. Batch evaluation is optional for historical analysis. We use uv — dramatically faster than pip.)
 
 ---
 
@@ -563,7 +570,7 @@ uv run python evaluation.py --hours 24 --limit 100
 | SelfHarm | 0-6 | Self-harm related content (0 = safe) |
 | HateUnfairness | 0-6 | Hate speech or discrimination (0 = safe) |
 
-(For reference, here are the exact evaluation metrics and their scales. Quality evaluation uses the Azure AI Evaluation SDK with four dimensions — fluency, coherence, relevance, and groundedness — each scored 1 to 5, where 5 is best. Safety evaluation uses Azure AI Content Safety across four categories — violence, sexual content, self-harm, and hate speech — scored 0 to 6, where 0 means safe. In the Grafana dashboard, we track all eight metrics over time, which gives you immediate visibility into quality regressions or safety incidents.)
+(Quality: four dimensions scored 1-to-5. Safety: four categories scored 0-to-6 where 0 is safe. All eight metrics tracked over time in Grafana for immediate regression visibility.)
 
 ---
 
