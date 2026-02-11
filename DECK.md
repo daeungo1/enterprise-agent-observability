@@ -320,7 +320,31 @@ logger.info("evaluation_result", extra={"custom_dimensions": event_properties})
 
 (The evaluation pipeline is a separate batch process. Step 1: it queries App Insights for recent LLM traces using KQL. Step 2: runs four quality evaluators — fluency, coherence, relevance, and groundedness — each scoring 1 to 5. Step 3: runs Azure Content Safety to check for violence, hate, sexual content, and self-harm — scored 0 to 6 where 0 is safe. Step 4: writes all scores back to App Insights as custom events so Grafana can display them.)
 
-### 4-4. Evaluation ↔ Observability Connection
+### 4-4. Real-time Background Evaluation (eval_background.py)
+
+```python
+# In main.py — after returning the response to the user:
+asyncio.create_task(
+    asyncio.to_thread(evaluate_single, user_input, final_output)
+)
+# → Runs quality + safety evaluation in a background thread
+# → Zero impact on response latency
+```
+
+```python
+# eval_background.py — evaluate_single()
+def evaluate_single(query: str, response: str) -> dict:
+    # Quality: Fluency, Coherence, Relevance, Groundedness (1-5)
+    # Safety: Violence, Sexual, SelfHarm, Hate (0-6)
+    # → Send results to App Insights customEvents
+    logger.info("evaluation_result", extra={"custom_dimensions": result})
+```
+
+**Key point**: Every chat response triggers evaluation automatically. No manual pipeline run needed for near real-time monitoring.
+
+(The batch pipeline is great for historical analysis, but we also wanted near real-time evaluation scores. So we added a background evaluation module. After the response is returned to the user, we spawn a background thread that runs the same quality and safety evaluations. It uses asyncio.to_thread so it doesn't block the event loop. The user sees zero latency increase, and evaluation results appear in Grafana within about 5 minutes.)
+
+### 4-5. Evaluation ↔ Observability Connection
 
 ```
                         App Insights
@@ -448,7 +472,8 @@ uv run python evaluation.py --hours 24 --limit 100
 otel-langfuse/
 ├── main.py              # FastAPI server + OpenTelemetry initialization
 ├── graph.py             # LangGraph workflow (Teacher-Student Quiz)
-├── evaluation.py        # Azure AI Evaluation automation pipeline
+├── eval_background.py   # Async background evaluation (auto per request)
+├── evaluation.py        # Azure AI Evaluation batch pipeline
 ├── config.py            # Configuration loader (.env)
 ├── pyproject.toml       # Python dependencies (uv)
 ├── .env                 # Environment variables (git ignored)
@@ -467,7 +492,7 @@ otel-langfuse/
     └── azure-grafana-langgraph.json   # Azure Managed Grafana dashboard (v2)
 ```
 
-(For anyone who wants to explore the repo later, here's the full project structure. The four Python files at the top are the core — main.py for the server, graph.py for the agent workflow, evaluation.py for the evaluation pipeline, and config.py for environment loading. The k8s folder has all the Kubernetes deployment configs.)
+(For anyone who wants to explore the repo later, here's the full project structure. The five Python files at the top are the core — main.py for the server, graph.py for the agent workflow, eval_background.py for real-time per-request evaluation, evaluation.py for the batch evaluation pipeline, and config.py for environment loading. The k8s folder has all the Kubernetes deployment configs.)
 
 ---
 
@@ -499,18 +524,18 @@ uv sync
 cp .env.example .env
 # Edit .env with your values
 
-# 3. Run the server
+# 3. Run the server (background eval runs automatically per request)
 .\.venv\Scripts\Activate.ps1
 python main.py
 # → http://localhost:8000
 
-# 4. Run evaluation pipeline
+# 4. Run batch evaluation pipeline (optional, for historical analysis)
 uv run python evaluation.py --hours 24 --limit 100
 ```
 
 **Requirements**: Python 3.10+, [uv](https://github.com/astral-sh/uv) package manager
 
-(Three commands to get started: uv sync to install, activate and run main.py for the server, and evaluation.py for the batch evaluation. The repo uses uv as the package manager — if you haven't tried it, it's significantly faster than pip.)
+(Three commands to get started: uv sync to install, activate and run main.py for the server, and evaluation.py for the batch evaluation. With the server running, every chat request automatically triggers background evaluation via eval_background.py. The repo uses uv as the package manager — if you haven't tried it, it's significantly faster than pip.)
 
 ---
 

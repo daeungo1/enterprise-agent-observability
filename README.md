@@ -58,7 +58,8 @@ LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collecto
 otel-langfuse/
 ├── main.py              # FastAPI 서버 + OpenTelemetry 초기화
 ├── graph.py             # LangGraph 워크플로우 (Teacher-Student 퀴즈)
-├── evaluation.py        # Azure AI Evaluation 자동화 파이프라인
+├── eval_background.py   # 비동기 백그라운드 평가 (요청마다 자동 실행)
+├── evaluation.py        # Azure AI Evaluation 배치 파이프라인
 ├── config.py            # 환경설정 로드 (.env)
 ├── pyproject.toml       # Python 의존성 (uv)
 ├── .env                 # 환경변수 (git ignore)
@@ -152,6 +153,15 @@ helm install otel-collector open-telemetry/opentelemetry-collector \
 | `AZURE_CONTENT_SAFETY_KEY` | Azure AI Content Safety 키 | ❌ (안전성 평가용) |
 
 ## 📊 평가 파이프라인 (Evaluation)
+
+### 실시간 비동기 평가 (eval_background.py)
+
+매 채팅 요청마다 백그라운드에서 자동으로 품질/안전성 평가를 실행합니다:
+- 사용자 응답 latency에 영향 없음 (`asyncio.to_thread` 사용)
+- 평가 결과를 App Insights customEvents에 즉시 전송
+- Grafana에서 ~5분 내 확인 가능
+
+### 배치 평가 (evaluation.py)
 
 ```bash
 uv run python evaluation.py --hours 24 --limit 100
@@ -281,7 +291,8 @@ LangGraph-based Teacher-Student Quiz System that sends LLM observability data to
 otel-langfuse/
 ├── main.py              # FastAPI server + OpenTelemetry initialization
 ├── graph.py             # LangGraph workflow (Teacher-Student Quiz)
-├── evaluation.py        # Azure AI Evaluation automation pipeline
+├── eval_background.py   # Async background evaluation (auto per request)
+├── evaluation.py        # Azure AI Evaluation batch pipeline
 ├── config.py            # Configuration loader (.env)
 ├── pyproject.toml       # Python dependencies (uv)
 ├── .env                 # Environment variables (git ignored)
@@ -373,6 +384,15 @@ helm install otel-collector open-telemetry/opentelemetry-collector \
 | `AZURE_CONTENT_SAFETY_KEY` | Azure AI Content Safety key | ❌ (for safety evaluation) |
 
 ## 📊 Evaluation Pipeline
+
+### Real-time Async Evaluation (eval_background.py)
+
+Every chat request automatically triggers background quality/safety evaluation:
+- Zero impact on response latency (uses `asyncio.to_thread`)
+- Sends evaluation results to App Insights customEvents immediately
+- Visible in Grafana within ~5 minutes
+
+### Batch Evaluation (evaluation.py)
 
 ```bash
 uv run python evaluation.py --hours 24 --limit 100

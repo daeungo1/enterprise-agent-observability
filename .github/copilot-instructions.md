@@ -56,7 +56,8 @@ flowchart TB
 otel-langfuse/
 ├── main.py              # FastAPI 서버 + OpenTelemetry 초기화
 ├── graph.py             # LangGraph 워크플로우 (Teacher-Student 퀴즈)
-├── evaluation.py        # Azure AI Evaluation 자동화 파이프라인
+├── eval_background.py   # 비동기 백그라운드 평가 (요청마다 자동 실행)
+├── evaluation.py        # Azure AI Evaluation 배치 파이프라인
 ├── config.py            # 환경설정 로드 (.env)
 ├── pyproject.toml       # Python 의존성 (uv)
 ├── .env                 # 환경변수 (git ignore)
@@ -109,7 +110,8 @@ AZURE_CONTENT_SAFETY_KEY=your-key
 - uv 패키지 매니저 사용
 - 의존성 설치: `uv sync`
 - 서버 실행: `.\.venv\Scripts\Activate.ps1; python main.py`
-- 평가 실행: `uv run python evaluation.py --hours 24 --limit 100`
+- 배치 평가 실행: `uv run python evaluation.py --hours 24 --limit 100`
+- 실시간 평가: 서버 실행 시 매 요청마다 비동기 자동 실행 (eval_background.py)
 
 ## Evaluation 평가 항목
 - **품질 평가** (Azure AI Evaluation SDK)
@@ -188,7 +190,8 @@ flowchart TB
 otel-langfuse/
 ├── main.py              # FastAPI server + OpenTelemetry initialization
 ├── graph.py             # LangGraph workflow (Teacher-Student Quiz)
-├── evaluation.py        # Azure AI Evaluation automation pipeline
+├── eval_background.py   # Async background evaluation (auto per request)
+├── evaluation.py        # Azure AI Evaluation batch pipeline
 ├── config.py            # Configuration loader (.env)
 ├── pyproject.toml       # Python dependencies (uv)
 ├── .env                 # Environment variables (git ignored)
@@ -241,7 +244,8 @@ AZURE_CONTENT_SAFETY_KEY=your-key
 - Use uv package manager
 - Install dependencies: `uv sync`
 - Run server: `.\.venv\Scripts\Activate.ps1; python main.py`
-- Run evaluation: `uv run python evaluation.py --hours 24 --limit 100`
+- Run batch evaluation: `uv run python evaluation.py --hours 24 --limit 100`
+- Real-time evaluation: Auto-runs per request when server is running (eval_background.py)
 
 ## Evaluation Metrics
 - **Quality Evaluation** (Azure AI Evaluation SDK)
