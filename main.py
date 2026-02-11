@@ -23,6 +23,7 @@ from graph import (
     create_graph, 
     QuizPhase,
 )
+from eval_background import evaluate_single
 
 # Global
 graph = None
@@ -194,6 +195,11 @@ async def chat(request: ChatRequest):
         # Return last AI response (combine if multiple) / 마지막 AI 응답 반환
         response_text = "\n\n".join(all_responses) if all_responses else "Unable to generate response. / 응답을 생성할 수 없습니다."
         
+        # Background evaluation (non-blocking) / 백그라운드 평가 (비동기, latency 영향 없음)
+        asyncio.create_task(
+            asyncio.to_thread(evaluate_single, request.message, response_text)
+        )
+        
         return ChatResponse(response=response_text, session_id=session_id)
     except Exception as e:
         print(f"Error: {e}")
@@ -333,6 +339,12 @@ async def chat_stream(request: ChatRequest):
                     "subject": final_state.values.get("subject"),
                     "round_count": final_state.values.get("round_count", 0),
                 }
+            
+            # Background evaluation (non-blocking) / 백그라운드 평가 (비동기, latency 영향 없음)
+            if final_output and user_input:
+                asyncio.create_task(
+                    asyncio.to_thread(evaluate_single, user_input, final_output)
+                )
             
             # Done event / 완료 이벤트
             yield f"data: {json.dumps({'type': 'done'})}\n\n"

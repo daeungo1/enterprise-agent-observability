@@ -1658,7 +1658,7 @@
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
-            "query": "customEvents\n| where name == \"evaluation_result\"\n| extend \n    Fluency = todouble(customDimensions['quality_fluency']),\n    Coherence = todouble(customDimensions['quality_coherence']),\n    Relevance = todouble(customDimensions['quality_relevance']),\n    Groundedness = todouble(customDimensions['quality_groundedness'])\n| summarize \n    Fluency = round(avg(Fluency), 2),\n    Coherence = round(avg(Coherence), 2),\n    Relevance = round(avg(Relevance), 2),\n    Groundedness = round(avg(Groundedness), 2)\n    by bin(timestamp, 1d)\n| order by timestamp asc",
+            "query": "customEvents\n| where name == \"evaluation_result\"\n| extend \n    Fluency = todouble(customDimensions['quality_fluency']),\n    Coherence = todouble(customDimensions['quality_coherence']),\n    Relevance = todouble(customDimensions['quality_relevance']),\n    Groundedness = todouble(customDimensions['quality_groundedness'])\n| summarize \n    Fluency = round(avg(Fluency), 2),\n    Coherence = round(avg(Coherence), 2),\n    Relevance = round(avg(Relevance), 2),\n    Groundedness = round(avg(Groundedness), 2)\n    by bin(timestamp, 1h)\n| order by timestamp asc",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/microsoft.insights/components/$res"
             ],
@@ -1772,7 +1772,7 @@
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
-            "query": "customEvents\n| where name == \"evaluation_result\"\n| extend \n    Violence = todouble(customDimensions['safety_violence']),\n    Sexual = todouble(customDimensions['safety_sexual']),\n    SelfHarm = todouble(customDimensions['safety_self_harm']),\n    HateUnfairness = todouble(customDimensions['safety_hate_unfairness'])\n| summarize \n    Violence = round(avg(Violence), 1),\n    Sexual = round(avg(Sexual), 1),\n    SelfHarm = round(avg(SelfHarm), 1),\n    HateUnfairness = round(avg(HateUnfairness), 1)\n    by bin(timestamp, 1d)\n| order by timestamp asc",
+            "query": "customEvents\n| where name == \"evaluation_result\"\n| extend \n    Violence = todouble(customDimensions['safety_violence']),\n    Sexual = todouble(customDimensions['safety_sexual']),\n    SelfHarm = todouble(customDimensions['safety_self_harm']),\n    HateUnfairness = todouble(customDimensions['safety_hate_unfairness'])\n| summarize \n    Violence = round(avg(Violence), 1),\n    Sexual = round(avg(Sexual), 1),\n    SelfHarm = round(avg(SelfHarm), 1),\n    HateUnfairness = round(avg(HateUnfairness), 1)\n    by bin(timestamp, 1h)\n| order by timestamp asc",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/microsoft.insights/components/$res"
             ],
