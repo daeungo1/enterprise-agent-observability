@@ -70,7 +70,7 @@ config:
     otlphttp/langfuse:
       endpoint: "http://langfuse-web.langfuse.svc.cluster.local:3000/api/public/otel"
       headers:
-        Authorization: "Basic cGstbGYtYjZkMDllMjgtMDY2ZS00NTg0LWFlY2YtMjdkZjM1NzJjMDAyOnNrLWxmLTE0NTE4MjVlLTA4MGYtNDQzOS1iNjJiLTk0NDcwZjdhMmExMA=="
+        Authorization: "Basic cGstbGYtNjc3MWMzMTktOTgyYi00MzBmLTllOGMtMGQxYmM2ODdhZmJmOnNrLWxmLTUwZGM1MjMxLTkwZmQtNDI5Yi04ODhiLTYxODcwMmU4ZTczOQ=="
       compression: gzip
     
     # Azure Application Insights Exporter
