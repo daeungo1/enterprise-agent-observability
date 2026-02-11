@@ -16,13 +16,13 @@ LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collecto
 │  (FastAPI)  │     │  Collector   │     │    (K8s)     │
 │ + Traceloop │     │    (K8s)     │     │              │
 └─────────────┘     └──────────────┘     └──────────────┘
-      OTLP/gRPC          OTLP/HTTP              │
-                              │                 │
-                              ▼                 │
-                    ┌──────────────┐            │
-                    │    Azure     │◀───────────┘
-                    │ Application  │   (Same Traces)
-                    │   Insights   │◀──────────────────────┐
+      OTLP/gRPC       │  OTLP/HTTP
+                      │  Azure Monitor
+                      ▼
+                    ┌──────────────┐
+                    │    Azure     │◀──────────────────────┐
+                    │ Application  │                       │
+                    │   Insights   │                       │
                     └──────────────┘                       │
                          │    │                            │
             ┌────────────┘    └────────────┐               │
@@ -44,7 +44,7 @@ LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collecto
 ```
 
 - **Traceloop SDK**: Auto-instrument LangChain/OpenAI calls to capture LLM input/output
-- **OTel Collector**: Forward traces to Langfuse and Azure Application Insights simultaneously
+- **OTel Collector**: Forward traces to Langfuse (OTLP/HTTP) and Azure Application Insights (Azure Monitor exporter) simultaneously
 - **Langfuse**: LLM observability dashboard
 - **Azure Application Insights**: Trace storage & query
 - **Azure Managed Grafana**: Custom dashboard visualization
@@ -58,8 +58,15 @@ LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collecto
 otel-langfuse/
 ├── main.py              # FastAPI 서버 + OpenTelemetry 초기화
 ├── graph.py             # LangGraph 워크플로우 (Teacher-Student 퀴즈)
-├── config.py            # 환경설정 로드
+├── evaluation.py        # Azure AI Evaluation 자동화 파이프라인
+├── config.py            # 환경설정 로드 (.env)
 ├── pyproject.toml       # Python 의존성 (uv)
+├── .env                 # 환경변수 (git ignore)
+├── evaluation_results/  # 평가 결과 저장 디렉토리
+│   ├── evaluation_data.jsonl
+│   ├── quality_evaluation_result.json
+│   ├── safety_evaluation_result.json
+│   └── evaluation_metrics.json
 ├── templates/
 │   └── index.html       # 웹 UI
 ├── static/
@@ -139,6 +146,20 @@ helm install otel-collector open-telemetry/opentelemetry-collector \
 | `AZURE_OPENAI_DEPLOYMENT_NAME` | 배포 이름 | ❌ (기본: gpt-4o) |
 | `AZURE_OPENAI_API_VERSION` | API 버전 | ❌ |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTel Collector gRPC 주소 | ❌ (기본: localhost:4317) |
+| `APP_INSIGHTS_WORKSPACE_ID` | Application Insights 워크스페이스 ID | ❌ (평가용) |
+| `APP_INSIGHTS_CONNECTION_STRING` | Application Insights 연결 문자열 | ❌ (평가용) |
+| `AZURE_CONTENT_SAFETY_ENDPOINT` | Azure AI Content Safety 엔드포인트 | ❌ (안전성 평가용) |
+| `AZURE_CONTENT_SAFETY_KEY` | Azure AI Content Safety 키 | ❌ (안전성 평가용) |
+
+## 📊 평가 파이프라인 (Evaluation)
+
+```bash
+uv run python evaluation.py --hours 24 --limit 100
+```
+
+- Application Insights에서 트레이스 쿼리 → 품질/안전성 평가 → 결과를 App Insights로 전송
+- **품질 평가** (Azure AI Evaluation SDK): Fluency, Coherence, Relevance, Groundedness
+- **안전성 평가** (Azure AI Content Safety): Violence, Sexual, SelfHarm, HateUnfairness
 
 ## 📊 Observability 스택
 
@@ -218,13 +239,13 @@ LangGraph-based Teacher-Student Quiz System that sends LLM observability data to
 │  (FastAPI)  │     │  Collector   │     │    (K8s)     │
 │ + Traceloop │     │    (K8s)     │     │              │
 └─────────────┘     └──────────────┘     └──────────────┘
-      OTLP/gRPC          OTLP/HTTP              │
-                              │                 │
-                              ▼                 │
-                    ┌──────────────┐            │
-                    │    Azure     │◀───────────┘
-                    │ Application  │   (Same Traces)
-                    │   Insights   │◀──────────────────────┐
+      OTLP/gRPC       │  OTLP/HTTP
+                      │  Azure Monitor
+                      ▼
+                    ┌──────────────┐
+                    │    Azure     │◀──────────────────────┐
+                    │ Application  │                       │
+                    │   Insights   │                       │
                     └──────────────┘                       │
                          │    │                            │
             ┌────────────┘    └────────────┐               │
@@ -246,7 +267,7 @@ LangGraph-based Teacher-Student Quiz System that sends LLM observability data to
 ```
 
 - **Traceloop SDK**: Auto-instrument LangChain/OpenAI calls to capture LLM input/output
-- **OTel Collector**: Forward traces to Langfuse and Azure Application Insights simultaneously
+- **OTel Collector**: Forward traces to Langfuse (OTLP/HTTP) and Azure Application Insights (Azure Monitor exporter) simultaneously
 - **Langfuse**: LLM observability dashboard
 - **Azure Application Insights**: Trace storage & query
 - **Azure Managed Grafana**: Custom dashboard visualization
@@ -260,8 +281,15 @@ LangGraph-based Teacher-Student Quiz System that sends LLM observability data to
 otel-langfuse/
 ├── main.py              # FastAPI server + OpenTelemetry initialization
 ├── graph.py             # LangGraph workflow (Teacher-Student Quiz)
-├── config.py            # Configuration loader
+├── evaluation.py        # Azure AI Evaluation automation pipeline
+├── config.py            # Configuration loader (.env)
 ├── pyproject.toml       # Python dependencies (uv)
+├── .env                 # Environment variables (git ignored)
+├── evaluation_results/  # Evaluation results directory
+│   ├── evaluation_data.jsonl
+│   ├── quality_evaluation_result.json
+│   ├── safety_evaluation_result.json
+│   └── evaluation_metrics.json
 ├── templates/
 │   └── index.html       # Web UI
 ├── static/
@@ -339,6 +367,20 @@ helm install otel-collector open-telemetry/opentelemetry-collector \
 | `AZURE_OPENAI_DEPLOYMENT_NAME` | Deployment name | ❌ (default: gpt-4o) |
 | `AZURE_OPENAI_API_VERSION` | API version | ❌ |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTel Collector gRPC address | ❌ (default: localhost:4317) |
+| `APP_INSIGHTS_WORKSPACE_ID` | Application Insights workspace ID | ❌ (for evaluation) |
+| `APP_INSIGHTS_CONNECTION_STRING` | Application Insights connection string | ❌ (for evaluation) |
+| `AZURE_CONTENT_SAFETY_ENDPOINT` | Azure AI Content Safety endpoint | ❌ (for safety evaluation) |
+| `AZURE_CONTENT_SAFETY_KEY` | Azure AI Content Safety key | ❌ (for safety evaluation) |
+
+## 📊 Evaluation Pipeline
+
+```bash
+uv run python evaluation.py --hours 24 --limit 100
+```
+
+- Queries traces from Application Insights → runs quality/safety evaluation → sends results back to App Insights
+- **Quality Evaluation** (Azure AI Evaluation SDK): Fluency, Coherence, Relevance, Groundedness
+- **Safety Evaluation** (Azure AI Content Safety): Violence, Sexual, SelfHarm, HateUnfairness
 
 ## 📝 License
 

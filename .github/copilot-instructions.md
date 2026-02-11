@@ -43,8 +43,7 @@ flowchart TB
     
     Traceloop -->|OTLP/gRPC| OTelCollector
     OTelCollector -->|OTLP/HTTP| Langfuse
-    OTelCollector -->|OTLP/HTTP| AppInsights
-    Langfuse -.->|Same Traces| AppInsights
+    OTelCollector -->|Azure Monitor| AppInsights
     AppInsights -->|Traces + Eval Results| Grafana
     AppInsights -->|Query Traces| EvalScript
     EvalScript -->|Quality| AIEval
@@ -176,8 +175,7 @@ flowchart TB
     
     Traceloop -->|OTLP/gRPC| OTelCollector
     OTelCollector -->|OTLP/HTTP| Langfuse
-    OTelCollector -->|OTLP/HTTP| AppInsights
-    Langfuse -.->|Same Traces| AppInsights
+    OTelCollector -->|Azure Monitor| AppInsights
     AppInsights -->|Traces + Eval Results| Grafana
     AppInsights -->|Query Traces| EvalScript
     EvalScript -->|Quality| AIEval
