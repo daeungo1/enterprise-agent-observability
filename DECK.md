@@ -401,6 +401,102 @@ uv run python evaluation.py --hours 24 --limit 100
 
 ---
 
+## Appendix A: Project Structure
+
+```
+otel-langfuse/
+├── main.py              # FastAPI server + OpenTelemetry initialization
+├── graph.py             # LangGraph workflow (Teacher-Student Quiz)
+├── evaluation.py        # Azure AI Evaluation automation pipeline
+├── config.py            # Configuration loader (.env)
+├── pyproject.toml       # Python dependencies (uv)
+├── .env                 # Environment variables (git ignored)
+├── evaluation_results/  # Evaluation results directory
+│   ├── evaluation_data.jsonl
+│   ├── quality_evaluation_result.json
+│   ├── safety_evaluation_result.json
+│   └── evaluation_metrics.json
+├── templates/
+│   └── index.html       # Web UI
+├── static/
+│   └── style.css        # Stylesheet
+└── k8s/
+    ├── langfuse-values.yaml           # Langfuse Helm values
+    ├── otel-collector-values.yaml     # OTel Collector Helm values
+    └── azure-grafana-langgraph.json   # Azure Managed Grafana dashboard (v2)
+```
+
+(For anyone who wants to explore the repo later, here's the full project structure. The four Python files at the top are the core — main.py for the server, graph.py for the agent workflow, evaluation.py for the evaluation pipeline, and config.py for environment loading. The k8s folder has all the Kubernetes deployment configs.)
+
+---
+
+## Appendix B: Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI endpoint URL |
+| `AZURE_OPENAI_API_KEY` | Azure OpenAI API key |
+| `AZURE_OPENAI_DEPLOYMENT_NAME` | Deployment name (e.g., `gpt-4o`) |
+| `AZURE_OPENAI_API_VERSION` | API version (e.g., `2024-08-01-preview`) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTel Collector gRPC endpoint (e.g., `http://<ip>:4317`) |
+| `APP_INSIGHTS_WORKSPACE_ID` | Log Analytics workspace ID (for KQL queries) |
+| `APP_INSIGHTS_CONNECTION_STRING` | App Insights connection string |
+| `AZURE_CONTENT_SAFETY_ENDPOINT` | Azure AI Content Safety endpoint |
+| `AZURE_CONTENT_SAFETY_KEY` | Azure AI Content Safety API key |
+
+(If you want to set this up in your own environment, these are all the environment variables you need. Copy the `.env.example`, fill in your values, and you're good to go.)
+
+---
+
+## Appendix C: Quick Start
+
+```bash
+# 1. Install dependencies
+uv sync
+
+# 2. Set up environment variables
+cp .env.example .env
+# Edit .env with your values
+
+# 3. Run the server
+.\.venv\Scripts\Activate.ps1
+python main.py
+# → http://localhost:8000
+
+# 4. Run evaluation pipeline
+uv run python evaluation.py --hours 24 --limit 100
+```
+
+**Requirements**: Python 3.10+, [uv](https://github.com/astral-sh/uv) package manager
+
+(Three commands to get started: uv sync to install, activate and run main.py for the server, and evaluation.py for the batch evaluation. The repo uses uv as the package manager — if you haven't tried it, it's significantly faster than pip.)
+
+---
+
+## Appendix D: Evaluation Metrics Reference
+
+### Quality Evaluation (Azure AI Evaluation SDK)
+
+| Metric | Scale | Description |
+|--------|-------|-------------|
+| Fluency | 1-5 | Linguistic quality and readability |
+| Coherence | 1-5 | Logical consistency and flow |
+| Relevance | 1-5 | How well the response addresses the query |
+| Groundedness | 1-5 | Factual accuracy based on provided context |
+
+### Safety Evaluation (Azure AI Content Safety)
+
+| Category | Scale | Description |
+|----------|-------|-------------|
+| Violence | 0-6 | Violence-related content (0 = safe) |
+| Sexual | 0-6 | Sexual content (0 = safe) |
+| SelfHarm | 0-6 | Self-harm related content (0 = safe) |
+| HateUnfairness | 0-6 | Hate speech or discrimination (0 = safe) |
+
+(For reference, here are the exact evaluation metrics. Quality scores use a 1-to-5 scale where 5 is best. Safety scores use a 0-to-6 scale where 0 means safe. In our Grafana dashboard, we track all of these over time so you can spot regressions immediately.)
+
+---
+
 ## References
 
 - [OpenTelemetry](https://opentelemetry.io/)
