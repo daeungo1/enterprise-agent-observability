@@ -1298,7 +1298,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${am_ds}"
       },
-      "description": "Overview of AI quality and safety evaluation scores from Azure AI Evaluation SDK",
+      "description": "Score Range: 1-5 | 1=Poor, 2=Below Avg, 3=Average, 4=Good, 5=Excellent | Higher is better",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1434,7 +1434,7 @@
           "refId": "A"
         }
       ],
-      "title": "Quality Evaluation Scores",
+      "title": "Quality Evaluation Scores (1-5, Higher is Better)",
       "type": "stat"
     },
     {
@@ -1442,7 +1442,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${am_ds}"
       },
-      "description": "Safety evaluation scores (lower is safer: 0=safe, 7=unsafe)",
+      "description": "Risk Level: 0=Safe, 2=Low, 4=Medium, 6=High | Lower is safer",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1567,7 +1567,7 @@
           "refId": "A"
         }
       ],
-      "title": "Safety Evaluation Scores",
+      "title": "Safety Evaluation Scores (0-6, Lower is Safer)",
       "type": "stat"
     },
     {
@@ -1575,7 +1575,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${am_ds}"
       },
-      "description": "Evaluation score trends over time",
+      "description": "Quality score trends over time (Range: 1-5, Higher is Better)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1673,7 +1673,7 @@
           "refId": "A"
         }
       ],
-      "title": "Quality Score Trends",
+      "title": "Quality Score Trends (1-5, Higher is Better)",
       "type": "timeseries"
     },
     {
@@ -1681,7 +1681,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${am_ds}"
       },
-      "description": "Safety score trends over time (lower is better)",
+      "description": "Safety risk trends over time (Range: 0-6, Lower is Safer)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1787,7 +1787,7 @@
           "refId": "A"
         }
       ],
-      "title": "Safety Score Trends",
+      "title": "Safety Score Trends (0-6, Lower is Safer)",
       "type": "timeseries"
     },
     {
