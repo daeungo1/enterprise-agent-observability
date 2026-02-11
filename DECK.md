@@ -111,29 +111,27 @@ SETUP → QUESTIONING → ANSWERING → EVALUATING → COMPLETE
 ### Conceptual Architecture
 
 ```
-                          ┌───────────────────────────────────────────┐
-                          │          Kubernetes Cluster               │
-                          │                                           │
-┌─────────────────┐       │  ┌──────────────┐     ┌──────────────┐  │
-│   LangGraph     │ OTLP  │  │    OTel      │OTLP │   Langfuse   │  │
-│   FastAPI App   │─gRPC──┼─▶│  Collector   │─HTTP┼─▶│  (Web UI)  │  │
-│  + Traceloop    │       │  │              │     │  └──────────────┘  │
-└─────────────────┘       │  │              │     │                    │
-   Azure OpenAI           │  │              │     │                    │
-     GPT-4o               │  └──────┬───────┘     │                    │
-                          │         │Azure Monitor │                    │
-                          └─────────┼──────────────┘                    │
-                                    ▼                                    
-                          ┌──────────────────┐                          
-                          │ Azure Application │◀──── evaluation.py      
-                          │     Insights      │      (stores results)   
-                          └────────┬─────────┘                          
-                                   │ KQL Query                          
-                                   ▼                                    
-                          ┌──────────────────┐                          
-                          │  Azure Managed   │                          
-                          │     Grafana      │                          
-                          └──────────────────┘                          
+                        ┌──────────────────────────────────────────────┐
+                        │            Kubernetes Cluster                │
+                        │                                              │
+┌─────────────────┐     │  ┌──────────────┐  OTLP   ┌──────────────┐   │
+│   LangGraph     │OTLP │  │              │──HTTP──▶│   Langfuse  │   │
+│   FastAPI App   │gRPC─┼──▶OTel Collector│         │   (Web UI)  │   │
+│  + Traceloop    │     │  │              │         └──────────────┘   │
+└─────────────────┘     │  └──────┬───────┘                            │
+   Azure OpenAI         │         │ Azure Monitor                      │
+     GPT-4o             └─────────┼────────────────────────────────────┘
+                                  ▼
+                        ┌────────────────────┐
+                        │ Azure Application  │◀──── evaluation.py
+                        │     Insights       │       (stores results)
+                        └────────┬───────────┘
+                                 │ KQL Query
+                                 ▼
+                        ┌────────────────────┐
+                        │  Azure Managed     │
+                        │     Grafana        │
+                        └────────────────────┘
 ```
 
 (Now here's the full architecture. The app sends traces via OTLP gRPC to the OpenTelemetry Collector running in Kubernetes. The Collector fans out to two destinations: Langfuse via OTLP HTTP for the LLM-specific trace UI, and Azure Application Insights via the Azure Monitor exporter for KQL-queryable storage. Then separately, the evaluation pipeline queries traces from App Insights, runs quality and safety evaluations, and writes the scores back to App Insights as custom events. Grafana reads both traces and evaluation results from App Insights via KQL.)
