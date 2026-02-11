@@ -18,11 +18,13 @@ flowchart TB
         FastAPI["FastAPI Server :8000"]
         LangGraph["LangGraph\nTeacher-Student"]
         Traceloop["Traceloop SDK"]
+        BGEval["eval_background.py"]
         AzureOAI["Azure OpenAI GPT-4o"]
         
         FastAPI --> LangGraph
         LangGraph --> AzureOAI
         Traceloop -.->|auto instrument| LangGraph
+        FastAPI --> BGEval
     end
     
     subgraph K8s["Kubernetes"]
@@ -35,7 +37,7 @@ flowchart TB
         Grafana["Managed Grafana"]
     end
     
-    subgraph Evaluation["Evaluation Pipeline"]
+    subgraph Evaluation["Batch Evaluation"]
         EvalScript["evaluation.py"]
         AIEval["Azure AI Evaluation\n(Fluency, QA)"]
         ContentSafety["Azure AI Content Safety\n(Violence, Sexual, etc.)"]
@@ -44,7 +46,8 @@ flowchart TB
     Traceloop -->|OTLP/gRPC| OTelCollector
     OTelCollector -->|OTLP/HTTP| Langfuse
     OTelCollector -->|Azure Monitor| AppInsights
-    AppInsights -->|Traces + Eval Results| Grafana
+    BGEval -->|Eval Results| AppInsights
+    AppInsights --> Grafana
     AppInsights -->|Query Traces| EvalScript
     EvalScript -->|Quality| AIEval
     EvalScript -->|Safety| ContentSafety
@@ -152,11 +155,13 @@ flowchart TB
         FastAPI["FastAPI Server :8000"]
         LangGraph["LangGraph\nTeacher-Student"]
         Traceloop["Traceloop SDK"]
+        BGEval["eval_background.py"]
         AzureOAI["Azure OpenAI GPT-4o"]
         
         FastAPI --> LangGraph
         LangGraph --> AzureOAI
         Traceloop -.->|auto instrument| LangGraph
+        FastAPI --> BGEval
     end
     
     subgraph K8s["Kubernetes"]
@@ -169,7 +174,7 @@ flowchart TB
         Grafana["Managed Grafana"]
     end
     
-    subgraph Evaluation["Evaluation Pipeline"]
+    subgraph Evaluation["Batch Evaluation"]
         EvalScript["evaluation.py"]
         AIEval["Azure AI Evaluation\n(Fluency, QA)"]
         ContentSafety["Azure AI Content Safety\n(Violence, Sexual, etc.)"]
@@ -178,7 +183,8 @@ flowchart TB
     Traceloop -->|OTLP/gRPC| OTelCollector
     OTelCollector -->|OTLP/HTTP| Langfuse
     OTelCollector -->|Azure Monitor| AppInsights
-    AppInsights -->|Traces + Eval Results| Grafana
+    BGEval -->|Eval Results| AppInsights
+    AppInsights --> Grafana
     AppInsights -->|Query Traces| EvalScript
     EvalScript -->|Quality| AIEval
     EvalScript -->|Safety| ContentSafety

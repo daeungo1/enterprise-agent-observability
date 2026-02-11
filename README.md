@@ -15,40 +15,39 @@ LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collecto
 │  LangGraph  │────▶│    OTel      │────▶│   Langfuse   │
 │  (FastAPI)  │     │  Collector   │     │    (K8s)     │
 │ + Traceloop │     │    (K8s)     │     │              │
-└─────────────┘     └──────────────┘     └──────────────┘
-      OTLP/gRPC       │  OTLP/HTTP
-                      │  Azure Monitor
-                      ▼
-                    ┌──────────────┐
-                    │    Azure     │◀──────────────────────┐
-                    │ Application  │                       │
-                    │   Insights   │                       │
-                    └──────────────┘                       │
-                         │    │                            │
-            ┌────────────┘    └────────────┐               │
-            ▼                              ▼               │
-┌──────────────────┐            ┌──────────────────┐       │
-│  Azure Managed   │            │   Evaluation     │───────┘
-│     Grafana      │            │    Pipeline      │  (Results)
-│   (Dashboard)    │            │  (evaluation.py) │
-└──────────────────┘            └──────────────────┘
-        ▲                              │    │
-        │                 ┌────────────┘    └────────────┐
-        │                 ▼                              ▼
-        │      ┌──────────────────┐         ┌──────────────────┐
-        │      │ Azure AI Eval SDK│         │Azure AI Content  │
-        │      │  (Fluency, QA)   │         │     Safety       │
-        │      └──────────────────┘         └──────────────────┘
-        │
-   Traces + Eval Results
+│ + BG Eval   │     └──────────────┘     └──────────────┘
+└──────┬──────┘   OTLP/gRPC  │  OTLP/HTTP
+       │                     │  Azure Monitor
+       │ Eval Results        ▼
+       │              ┌──────────────┐
+       └─────────────▶│    Azure     │◀────────────────────┐
+                      │ Application  │                     │
+                      │   Insights   │                     │
+                      └──────────────┘                     │
+                           │    │                          │
+              ┌────────────┘    └────────────┐             │
+              ▼                              ▼             │
+ ┌──────────────────┐            ┌──────────────────┐      │
+ │  Azure Managed   │            │ Batch Evaluation │──────┘
+ │     Grafana      │            │    Pipeline      │(Results)
+ │   (Dashboard)    │            │ (evaluation.py)  │
+ └──────────────────┘            └──────────────────┘
+                                        │    │
+                           ┌────────────┘    └────────────┐
+                           ▼                              ▼
+                ┌──────────────────┐         ┌──────────────────┐
+                │ Azure AI Eval SDK│         │Azure AI Content  │
+                │  (Fluency, QA)   │         │     Safety       │
+                └──────────────────┘         └──────────────────┘
 ```
 
 - **Traceloop SDK**: Auto-instrument LangChain/OpenAI calls to capture LLM input/output
 - **OTel Collector**: Forward traces to Langfuse (OTLP/HTTP) and Azure Application Insights (Azure Monitor exporter) simultaneously
 - **Langfuse**: LLM observability dashboard
-- **Azure Application Insights**: Trace storage & query
+- **Azure Application Insights**: Trace storage & query (traces + evaluation results)
 - **Azure Managed Grafana**: Custom dashboard visualization
-- **Evaluation Pipeline**: Automated quality & safety evaluation
+- **eval_background.py**: Per-request async evaluation → sends results directly to App Insights
+- **Batch Evaluation Pipeline** (evaluation.py): Historical batch evaluation
   - **Azure AI Evaluation SDK**: Fluency, Coherence, Relevance, Groundedness
   - **Azure AI Content Safety**: Violence, Sexual, SelfHarm, Hate detection
 
@@ -248,40 +247,39 @@ LangGraph-based Teacher-Student Quiz System that sends LLM observability data to
 │  LangGraph  │────▶│    OTel      │────▶│   Langfuse   │
 │  (FastAPI)  │     │  Collector   │     │    (K8s)     │
 │ + Traceloop │     │    (K8s)     │     │              │
-└─────────────┘     └──────────────┘     └──────────────┘
-      OTLP/gRPC       │  OTLP/HTTP
-                      │  Azure Monitor
-                      ▼
-                    ┌──────────────┐
-                    │    Azure     │◀──────────────────────┐
-                    │ Application  │                       │
-                    │   Insights   │                       │
-                    └──────────────┘                       │
-                         │    │                            │
-            ┌────────────┘    └────────────┐               │
-            ▼                              ▼               │
-┌──────────────────┐            ┌──────────────────┐       │
-│  Azure Managed   │            │   Evaluation     │───────┘
-│     Grafana      │            │    Pipeline      │  (Results)
-│   (Dashboard)    │            │  (evaluation.py) │
-└──────────────────┘            └──────────────────┘
-        ▲                              │    │
-        │                 ┌────────────┘    └────────────┐
-        │                 ▼                              ▼
-        │      ┌──────────────────┐         ┌──────────────────┐
-        │      │ Azure AI Eval SDK│         │Azure AI Content  │
-        │      │  (Fluency, QA)   │         │     Safety       │
-        │      └──────────────────┘         └──────────────────┘
-        │
-   Traces + Eval Results
+│ + BG Eval   │     └──────────────┘     └──────────────┘
+└──────┬──────┘   OTLP/gRPC  │  OTLP/HTTP
+       │                     │  Azure Monitor
+       │ Eval Results        ▼
+       │              ┌──────────────┐
+       └─────────────▶│    Azure     │◀────────────────────┐
+                      │ Application  │                     │
+                      │   Insights   │                     │
+                      └──────────────┘                     │
+                           │    │                          │
+              ┌────────────┘    └────────────┐             │
+              ▼                              ▼             │
+ ┌──────────────────┐            ┌──────────────────┐      │
+ │  Azure Managed   │            │ Batch Evaluation │──────┘
+ │     Grafana      │            │    Pipeline      │(Results)
+ │   (Dashboard)    │            │ (evaluation.py)  │
+ └──────────────────┘            └──────────────────┘
+                                        │    │
+                           ┌────────────┘    └────────────┐
+                           ▼                              ▼
+                ┌──────────────────┐         ┌──────────────────┐
+                │ Azure AI Eval SDK│         │Azure AI Content  │
+                │  (Fluency, QA)   │         │     Safety       │
+                └──────────────────┘         └──────────────────┘
 ```
 
 - **Traceloop SDK**: Auto-instrument LangChain/OpenAI calls to capture LLM input/output
 - **OTel Collector**: Forward traces to Langfuse (OTLP/HTTP) and Azure Application Insights (Azure Monitor exporter) simultaneously
 - **Langfuse**: LLM observability dashboard
-- **Azure Application Insights**: Trace storage & query
+- **Azure Application Insights**: Trace storage & query (traces + evaluation results)
 - **Azure Managed Grafana**: Custom dashboard visualization
-- **Evaluation Pipeline**: Automated quality & safety evaluation
+- **eval_background.py**: Per-request async evaluation → sends results directly to App Insights
+- **Batch Evaluation Pipeline** (evaluation.py): Historical batch evaluation
   - **Azure AI Evaluation SDK**: Fluency, Coherence, Relevance, Groundedness
   - **Azure AI Content Safety**: Violence, Sexual, SelfHarm, Hate detection
 

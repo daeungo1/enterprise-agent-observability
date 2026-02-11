@@ -144,11 +144,13 @@ flowchart TB
         FastAPI["FastAPI Server :8000"]
         LangGraph["LangGraph<br/>Teacher-Student"]
         Traceloop["Traceloop SDK"]
+        BGEval["eval_background.py"]
         AzureOAI["Azure OpenAI GPT-4o"]
 
         FastAPI --> LangGraph
         LangGraph --> AzureOAI
         Traceloop -.->|auto instrument| LangGraph
+        FastAPI --> BGEval
     end
 
     subgraph K8s["Kubernetes"]
@@ -161,7 +163,7 @@ flowchart TB
         Grafana["Managed Grafana"]
     end
 
-    subgraph Evaluation["Evaluation Pipeline"]
+    subgraph Evaluation["Batch Evaluation"]
         EvalScript["evaluation.py"]
         AIEval["Azure AI Evaluation<br/>(Fluency, QA)"]
         ContentSafety["Azure AI Content Safety<br/>(Violence, Sexual, etc.)"]
@@ -170,7 +172,8 @@ flowchart TB
     Traceloop -->|OTLP/gRPC| OTelCollector
     OTelCollector -->|OTLP/HTTP| Langfuse
     OTelCollector -->|Azure Monitor| AppInsights
-    AppInsights -->|Traces + Eval Results| Grafana
+    BGEval -->|Eval Results| AppInsights
+    AppInsights --> Grafana
     AppInsights -->|Query Traces| EvalScript
     EvalScript -->|Quality| AIEval
     EvalScript -->|Safety| ContentSafety
@@ -186,8 +189,9 @@ flowchart TB
 | 1 | FastAPI App | OTel Collector | OTLP/gRPC (:4317) | LLM traces (input/output/tokens) |
 | 2 | OTel Collector | Langfuse | OTLP/HTTP | Same traces → LLM-specific UI |
 | 3 | OTel Collector | App Insights | Azure Monitor exporter | Same traces → KQL queryable |
-| 4 | evaluation.py | App Insights | opencensus (customEvents) | Evaluation scores (quality + safety) |
-| 5 | App Insights | Grafana | KQL query | Traces + evaluation results visualization |
+| 4 | eval_background.py | App Insights | opencensus (customEvents) | Per-request evaluation scores (quality + safety) |
+| 5 | evaluation.py | App Insights | opencensus (customEvents) | Batch evaluation scores (quality + safety) |
+| 6 | App Insights | Grafana | KQL query | Traces + evaluation results visualization |
 
 (Let me break down the data flow step by step. Step 1: the app sends OTLP gRPC to the Collector. Steps 2 and 3 happen in parallel — the Collector exports the same trace data to both Langfuse and App Insights using different exporters. Step 4 is the evaluation pipeline writing scores back. And Step 5 is Grafana pulling everything together via KQL queries.)
 
