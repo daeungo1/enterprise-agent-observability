@@ -40,41 +40,6 @@
       "hate": 0,
       "sexual": 0,
       "self_harm": 0
-    },
-    {
-      "query": "next",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "다음",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "next",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "medium science",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "medium programming",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
     }
   ]
 }

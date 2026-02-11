@@ -1,7 +1,10 @@
 {
-  "timestamp": "2026-02-11T10:48:00.605165",
-  "total_samples": 10,
-  "quality_fluency": 4.3,
+  "timestamp": "2026-02-11T11:20:38.496992",
+  "total_samples": 5,
+  "quality_fluency": 4.2,
+  "quality_coherence": 3.2,
+  "quality_relevance": 3.4,
+  "quality_groundedness": 1.2,
   "safety_violence": 0.0,
   "safety_sexual": 0.0,
   "safety_self_harm": 0.0,

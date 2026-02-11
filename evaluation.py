@@ -19,7 +19,9 @@ load_dotenv()
 from azure.ai.evaluation import (
     evaluate,
     FluencyEvaluator,
-    QAEvaluator,
+    CoherenceEvaluator,
+    RelevanceEvaluator,
+    GroundednessEvaluator,
     AzureOpenAIModelConfiguration,
 )
 
@@ -236,10 +238,15 @@ def save_traces_as_jsonl(traces: list[dict], filename: str) -> Path:
         for trace in traces:
             # Extract only fields needed for evaluation (exclude timestamp)
             # 평가에 필요한 필드만 추출 (timestamp 제외)
+            query = str(trace.get("query", ""))
+            response = str(trace.get("response", ""))
+            # Use query as context if context is empty (Teacher question = grounding context)
+            # context가 비어있으면 query를 context로 사용 (Teacher 질문 = 근거 컨텍스트)
+            context = str(trace.get("context", "")) or query
             eval_data = {
-                "query": str(trace.get("query", "")),
-                "response": str(trace.get("response", "")),
-                "context": str(trace.get("context", "")),
+                "query": query,
+                "response": response,
+                "context": context,
             }
             f.write(json.dumps(eval_data, ensure_ascii=False) + "\n")
     print(f"✅ Saved {len(traces)} traces to {filepath}")
@@ -248,15 +255,21 @@ def save_traces_as_jsonl(traces: list[dict], filename: str) -> Path:
 
 def run_quality_evaluation(data_path: Path) -> dict:
     """
-    Run quality evaluation (Fluency, QA)
-    품질 평가 실행 (Fluency, QA)
+    Run quality evaluation (Fluency, Coherence, Relevance, Groundedness)
+    Uses individual evaluators - no ground_truth required
+    
+    품질 평가 실행 (Fluency, Coherence, Relevance, Groundedness)
+    개별 Evaluator 사용 - ground_truth 불필요
     """
     model_config = get_model_config()
     
-    # Quality Evaluators
+    # Individual Quality Evaluators / 개별 품질 평가자
     fluency_eval = FluencyEvaluator(model_config)
+    coherence_eval = CoherenceEvaluator(model_config)
+    relevance_eval = RelevanceEvaluator(model_config)
+    groundedness_eval = GroundednessEvaluator(model_config)
     
-    print("🔍 Running Quality Evaluation...")
+    print("🔍 Running Quality Evaluation (Fluency, Coherence, Relevance, Groundedness)...")
     
     output_file = OUTPUT_DIR / "quality_evaluation_result.json"
     
@@ -264,12 +277,34 @@ def run_quality_evaluation(data_path: Path) -> dict:
         data=str(data_path),
         evaluators={
             "fluency": fluency_eval,
+            "coherence": coherence_eval,
+            "relevance": relevance_eval,
+            "groundedness": groundedness_eval,
         },
         evaluator_config={
             "fluency": {
                 "column_mapping": {
                     "query": "${data.query}",
                     "response": "${data.response}",
+                }
+            },
+            "coherence": {
+                "column_mapping": {
+                    "query": "${data.query}",
+                    "response": "${data.response}",
+                }
+            },
+            "relevance": {
+                "column_mapping": {
+                    "query": "${data.query}",
+                    "response": "${data.response}",
+                }
+            },
+            "groundedness": {
+                "column_mapping": {
+                    "query": "${data.query}",
+                    "response": "${data.response}",
+                    "context": "${data.context}",
                 }
             },
         },
@@ -287,9 +322,15 @@ def run_quality_evaluation(data_path: Path) -> dict:
         # Calculate metrics / metrics 계산
         rows = saved_result.get("rows", [])
         fluency_scores = [r.get("outputs.fluency.fluency", 0) for r in rows if r.get("outputs.fluency.fluency") is not None]
+        coherence_scores = [r.get("outputs.coherence.coherence", 0) for r in rows if r.get("outputs.coherence.coherence") is not None]
+        relevance_scores = [r.get("outputs.relevance.relevance", 0) for r in rows if r.get("outputs.relevance.relevance") is not None]
+        groundedness_scores = [r.get("outputs.groundedness.groundedness", 0) for r in rows if r.get("outputs.groundedness.groundedness") is not None]
         
         metrics = {
-            "fluency.fluency": sum(fluency_scores) / len(fluency_scores) if fluency_scores else None
+            "fluency.fluency": sum(fluency_scores) / len(fluency_scores) if fluency_scores else None,
+            "coherence.coherence": sum(coherence_scores) / len(coherence_scores) if coherence_scores else None,
+            "relevance.relevance": sum(relevance_scores) / len(relevance_scores) if relevance_scores else None,
+            "groundedness.groundedness": sum(groundedness_scores) / len(groundedness_scores) if groundedness_scores else None,
         }
         
         return {"metrics": metrics, "rows": rows}
@@ -388,62 +429,6 @@ def run_safety_evaluation(traces: list[dict]) -> dict:
     return result
 
 
-def run_qa_evaluation(data_path: Path) -> dict:
-    """
-    QA 평가 실행 (Groundedness, Relevance, Coherence, Fluency, Similarity, F1)
-    """
-    model_config = get_model_config()
-    
-    # QA Evaluator (복합 평가자)
-    qa_eval = QAEvaluator(model_config)
-    
-    print("🔍 Running QA Evaluation...")
-    
-    output_file = OUTPUT_DIR / "qa_evaluation_result.json"
-    
-    result = evaluate(
-        data=str(data_path),
-        evaluators={
-            "qa": qa_eval,
-        },
-        evaluator_config={
-            "qa": {
-                "column_mapping": {
-                    "query": "${data.query}",
-                    "response": "${data.response}",
-                    "context": "${data.context}",
-                    "ground_truth": "${data.ground_truth}",
-                }
-            },
-        },
-        output_path=str(output_file),
-    )
-    
-    print("✅ QA Evaluation completed")
-    
-    # 결과 파일에서 메트릭 추출 (Timestamp 직렬화 문제 우회)
-    try:
-        with open(output_file, "r", encoding="utf-8") as f:
-            saved_result = json.load(f)
-        
-        # metrics 계산
-        rows = saved_result.get("rows", [])
-        coherence_scores = [r.get("outputs.qa.coherence", 0) for r in rows if r.get("outputs.qa.coherence") is not None]
-        relevance_scores = [r.get("outputs.qa.relevance", 0) for r in rows if r.get("outputs.qa.relevance") is not None]
-        groundedness_scores = [r.get("outputs.qa.groundedness", 0) for r in rows if r.get("outputs.qa.groundedness") is not None]
-        
-        metrics = {
-            "qa.coherence": sum(coherence_scores) / len(coherence_scores) if coherence_scores else None,
-            "qa.relevance": sum(relevance_scores) / len(relevance_scores) if relevance_scores else None,
-            "qa.groundedness": sum(groundedness_scores) / len(groundedness_scores) if groundedness_scores else None,
-        }
-        
-        return {"metrics": metrics, "rows": rows}
-    except Exception as e:
-        print(f"   Warning: Could not parse saved result: {e}")
-        return {"metrics": {}, "rows": []}
-
-
 def generate_evaluation_summary(results: dict) -> dict:
     """평가 결과 요약 생성"""
     summary = {
@@ -456,9 +441,9 @@ def generate_evaluation_summary(results: dict) -> dict:
     metrics = results.get("metrics", {})
     summary["quality_scores"] = {
         "fluency": metrics.get("fluency.fluency", None),
-        "coherence": metrics.get("qa.coherence", None),
-        "relevance": metrics.get("qa.relevance", None),
-        "groundedness": metrics.get("qa.groundedness", None),
+        "coherence": metrics.get("coherence.coherence", None),
+        "relevance": metrics.get("relevance.relevance", None),
+        "groundedness": metrics.get("groundedness.groundedness", None),
     }
     
     # Safety scores - Azure AI Content Safety 형식 (safety_*)
@@ -675,15 +660,7 @@ async def run_evaluation_pipeline(hours: int = 24, limit: int = 100):
             row["sexual"] = safety_rows[i].get("sexual", 0)
             row["self_harm"] = safety_rows[i].get("self_harm", 0)
     
-    # QA Evaluation (ground_truth가 있는 경우)
-    if any("ground_truth" in t for t in traces):
-        try:
-            qa_result = run_qa_evaluation(data_path)
-            all_results["metrics"].update(qa_result.get("metrics", {}))
-        except Exception as e:
-            print(f"⚠️ QA evaluation failed: {e}")
-    
-    # 4. 결과 요약
+    # 4. 결과 요약 / Generate summary
     summary = generate_evaluation_summary(all_results)
     
     # 5. Grafana용 저장
