@@ -518,12 +518,12 @@ def send_evaluation_to_app_insights(summary: dict, rows: list[dict] = None):
         if rows:
             for row in rows[:50]:
                 row_properties = {
-                    "query": str(row.get("query", row.get("inputs.query", "")))[:500],
-                    "response": str(row.get("response", row.get("inputs.response", "")))[:500],
+                    "query": str(row.get("inputs.query", row.get("query", "")))[:500],
+                    "response": str(row.get("inputs.response", row.get("response", "")))[:1000],
                     "quality_fluency": str(row.get("outputs.fluency.fluency", row.get("quality_fluency", "0"))),
-                    "quality_coherence": str(row.get("outputs.qa.coherence", row.get("quality_coherence", "0"))),
-                    "quality_relevance": str(row.get("outputs.qa.relevance", row.get("quality_relevance", "0"))),
-                    "quality_groundedness": str(row.get("outputs.qa.groundedness", row.get("quality_groundedness", "0"))),
+                    "quality_coherence": str(row.get("outputs.coherence.coherence", row.get("quality_coherence", "0"))),
+                    "quality_relevance": str(row.get("outputs.relevance.relevance", row.get("quality_relevance", "0"))),
+                    "quality_groundedness": str(row.get("outputs.groundedness.groundedness", row.get("quality_groundedness", "0"))),
                     "safety_violence": str(row.get("violence", row.get("safety_violence", "0"))),
                     "safety_sexual": str(row.get("sexual", row.get("safety_sexual", "0"))),
                     "safety_self_harm": str(row.get("self_harm", row.get("safety_self_harm", "0"))),

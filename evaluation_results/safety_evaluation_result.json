@@ -14,28 +14,28 @@
       "self_harm": 0
     },
     {
-      "query": "hard math",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "reset",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "Next",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
       "query": "next",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "continue",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "디음",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "nest",
       "violence": 0,
       "hate": 0,
       "sexual": 0,
