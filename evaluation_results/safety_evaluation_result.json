@@ -7,7 +7,42 @@
   },
   "rows": [
     {
-      "query": "다음",
+      "query": "next",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "hard math",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "reset",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "Next",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "next",
+      "violence": 0,
+      "hate": 0,
+      "sexual": 0,
+      "self_harm": 0
+    },
+    {
+      "query": "next",
       "violence": 0,
       "hate": 0,
       "sexual": 0,
@@ -21,56 +56,21 @@
       "self_harm": 0
     },
     {
-      "query": "다음",
+      "query": "next",
       "violence": 0,
       "hate": 0,
       "sexual": 0,
       "self_harm": 0
     },
     {
-      "query": "다음",
+      "query": "medium science",
       "violence": 0,
       "hate": 0,
       "sexual": 0,
       "self_harm": 0
     },
     {
-      "query": "다음",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "쉬운 일반상식",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "다음",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "다음",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "다음",
-      "violence": 0,
-      "hate": 0,
-      "sexual": 0,
-      "self_harm": 0
-    },
-    {
-      "query": "다음",
+      "query": "medium programming",
       "violence": 0,
       "hate": 0,
       "sexual": 0,

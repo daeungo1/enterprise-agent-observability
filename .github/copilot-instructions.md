@@ -1,5 +1,9 @@
 ```instructions
-# 핵심 규칙
+# 한국어 (Korean) / English
+
+---
+
+# 🇰🇷 핵심 규칙
 - 프로젝트명: otel-langfuse
 - LangGraph 기반 Teacher-Student 퀴즈 시스템
 - OpenTelemetry + Traceloop을 통한 LLM observability
@@ -129,6 +133,139 @@ AZURE_CONTENT_SAFETY_KEY=your-key
 - 반드시 한국어만 사용
 - 이모지 최소화
 - 완료시 "완료" 라고 대답
+
+---
+
+# 🇺🇸 Core Rules
+- Project Name: otel-langfuse
+- LangGraph-based Teacher-Student Quiz System
+- LLM observability via OpenTelemetry + Traceloop
+- Automated evaluation with Azure AI Evaluation SDK (Quality) + Azure AI Content Safety (Safety)
+- Web server built with FastAPI
+- Uses Azure OpenAI (GPT-4o)
+
+## Architecture
+```mermaid
+flowchart TB
+    subgraph App["LangGraph App"]
+        FastAPI["FastAPI Server :8000"]
+        LangGraph["LangGraph\nTeacher-Student"]
+        Traceloop["Traceloop SDK"]
+        AzureOAI["Azure OpenAI GPT-4o"]
+        
+        FastAPI --> LangGraph
+        LangGraph --> AzureOAI
+        Traceloop -.->|auto instrument| LangGraph
+    end
+    
+    subgraph K8s["Kubernetes"]
+        OTelCollector["OTel Collector :4317"]
+        Langfuse["Langfuse"]
+    end
+    
+    subgraph Observability["Azure Observability"]
+        AppInsights["Application Insights"]
+        Grafana["Managed Grafana"]
+    end
+    
+    subgraph Evaluation["Evaluation Pipeline"]
+        EvalScript["evaluation.py"]
+        AIEval["Azure AI Evaluation\n(Fluency, QA)"]
+        ContentSafety["Azure AI Content Safety\n(Violence, Sexual, etc.)"]
+    end
+    
+    Traceloop -->|OTLP/gRPC| OTelCollector
+    OTelCollector -->|OTLP/HTTP| Langfuse
+    OTelCollector -->|OTLP/HTTP| AppInsights
+    Langfuse -.->|Same Traces| AppInsights
+    AppInsights -->|Traces + Eval Results| Grafana
+    AppInsights -->|Query Traces| EvalScript
+    EvalScript -->|Quality| AIEval
+    EvalScript -->|Safety| ContentSafety
+    EvalScript -->|Store Results| AppInsights
+```
+
+## Project Structure
+```
+otel-langfuse/
+├── main.py              # FastAPI server + OpenTelemetry initialization
+├── graph.py             # LangGraph workflow (Teacher-Student Quiz)
+├── evaluation.py        # Azure AI Evaluation automation pipeline
+├── config.py            # Configuration loader (.env)
+├── pyproject.toml       # Python dependencies (uv)
+├── .env                 # Environment variables (git ignored)
+├── evaluation_results/  # Evaluation results directory
+│   ├── evaluation_data.jsonl
+│   ├── quality_evaluation_result.json
+│   ├── safety_evaluation_result.json
+│   └── evaluation_metrics.json
+├── templates/
+│   └── index.html       # Web UI
+├── static/
+│   └── style.css        # Stylesheet
+└── k8s/
+    ├── langfuse-values.yaml           # Langfuse Helm values
+    ├── otel-collector-values.yaml     # OTel Collector Helm values
+    └── azure-grafana-langgraph.json   # Azure Managed Grafana dashboard (v2)
+```
+
+## Tech Stack
+- **LangGraph**: Multi-Agent workflow
+- **LangChain OpenAI**: Azure OpenAI integration
+- **Traceloop SDK**: LLM input/output auto-instrumentation
+- **OpenTelemetry**: Distributed tracing
+- **Azure AI Evaluation SDK**: Quality evaluation (Fluency, QA)
+- **Azure AI Content Safety**: Safety evaluation (Violence, Sexual, SelfHarm, Hate)
+- **FastAPI**: Web framework
+
+## Environment Variables (.env)
+```bash
+# Azure OpenAI
+AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-api-key
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
+AZURE_OPENAI_API_VERSION=2024-08-01-preview
+
+# OpenTelemetry
+OTEL_EXPORTER_OTLP_ENDPOINT=http://20.214.217.93:4317
+
+# Application Insights (for Evaluation data query)
+APP_INSIGHTS_WORKSPACE_ID=your-workspace-id
+APP_INSIGHTS_CONNECTION_STRING=InstrumentationKey=...
+
+# Azure AI Content Safety (for Safety evaluation)
+AZURE_CONTENT_SAFETY_ENDPOINT=https://your-endpoint.cognitiveservices.azure.com/
+AZURE_CONTENT_SAFETY_KEY=your-key
+```
+
+## Development
+- Python 3.10+
+- Use uv package manager
+- Install dependencies: `uv sync`
+- Run server: `.\.venv\Scripts\Activate.ps1; python main.py`
+- Run evaluation: `uv run python evaluation.py --hours 24 --limit 100`
+
+## Evaluation Metrics
+- **Quality Evaluation** (Azure AI Evaluation SDK)
+  - Fluency: Response fluency (1-5 score)
+  - QA: Coherence, Relevance, Groundedness
+- **Safety Evaluation** (Azure AI Content Safety)
+  - Violence: Violence level (0-6, 0=safe)
+  - Sexual: Sexual content
+  - SelfHarm: Self-harm related
+  - HateUnfairness: Hate/discrimination
+
+## Grafana Dashboard Panels
+1. **Quality Evaluation Scores**: Fluency, Coherence, Relevance, Groundedness
+2. **Safety Evaluation Scores**: Violence, Sexual, SelfHarm, HateUnfairness
+3. **Quality Score Trends**: Quality score trends over time
+4. **Safety Score Trends**: Safety score trends over time
+5. **Evaluation Results Detail**: Individual evaluation results table
+
+## Conversation Rules
+- Use English for global presentation
+- Minimize emojis
+- Reply "Done" when completed
 ```
 
 

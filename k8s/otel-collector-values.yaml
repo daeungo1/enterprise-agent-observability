@@ -1,11 +1,11 @@
 # OpenTelemetry Collector Helm Values for Langfuse Integration
 mode: deployment
 
-# 이미지 설정
+# Image settings / 이미지 설정
 image:
   repository: otel/opentelemetry-collector-contrib
 
-# 리소스 설정
+# Resource settings / 리소스 설정
 resources:
   limits:
     cpu: 500m
@@ -14,11 +14,11 @@ resources:
     cpu: 100m
     memory: 128Mi
 
-# 서비스 설정
+# Service settings / 서비스 설정
 service:
   type: LoadBalancer
 
-# 포트 설정
+# Port settings / 포트 설정
 ports:
   otlp:
     enabled: true
@@ -33,7 +33,7 @@ ports:
     hostPort: 4318
     protocol: TCP
 
-# Collector 설정
+# Collector settings / Collector 설정
 config:
   receivers:
     otlp:
@@ -56,7 +56,7 @@ config:
       check_interval: 1s
       limit_mib: 400
       spike_limit_mib: 100
-    # Attribute 길이 제한 해제
+    # Remove attribute length limit / Attribute 길이 제한 해제
     transform:
       trace_statements:
         - context: span
@@ -78,6 +78,7 @@ config:
       connection_string: "InstrumentationKey=56c485f0-01ca-4a40-ab82-c2aa434b5880;IngestionEndpoint=https://eastus2-3.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus2.livediagnostics.monitor.azure.com/;ApplicationId=10f4275f-a278-41a9-a808-f46d1ab54aca"
 
   service:
+    # Telemetry settings - increase attribute length limit
     # Telemetry 설정 - attribute 길이 제한 늘리기
     telemetry:
       logs:

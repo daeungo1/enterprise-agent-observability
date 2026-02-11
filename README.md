@@ -1,4 +1,10 @@
-# otel-langfuse
+# Agent observability with OpenTelemetry
+
+> 🇰🇷 [한국어](#한국어) | 🇺🇸 [English](#english)
+
+---
+
+# 한국어
 
 LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collector**를 통해 LLM observability 데이터를 Langfuse로 전송합니다.
 
@@ -197,3 +203,143 @@ OTel Collector에서 Azure Application Insights로 트레이스를 전송하고,
 - Distributed Trace View
 
 **대시보드 Import:** `k8s/azure-grafana-langgraph.json` 파일을 Azure managed Grafana에서 Import
+
+---
+
+# English
+
+LangGraph-based Teacher-Student Quiz System that sends LLM observability data to Langfuse via **OpenTelemetry Collector**.
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐
+│  LangGraph  │────▶│    OTel      │────▶│   Langfuse   │
+│  (FastAPI)  │     │  Collector   │     │    (K8s)     │
+│ + Traceloop │     │    (K8s)     │     │              │
+└─────────────┘     └──────────────┘     └──────────────┘
+      OTLP/gRPC          OTLP/HTTP              │
+                              │                 │
+                              ▼                 │
+                    ┌──────────────┐            │
+                    │    Azure     │◀───────────┘
+                    │ Application  │   (Same Traces)
+                    │   Insights   │◀──────────────────────┐
+                    └──────────────┘                       │
+                         │    │                            │
+            ┌────────────┘    └────────────┐               │
+            ▼                              ▼               │
+┌──────────────────┐            ┌──────────────────┐       │
+│  Azure Managed   │            │   Evaluation     │───────┘
+│     Grafana      │            │    Pipeline      │  (Results)
+│   (Dashboard)    │            │  (evaluation.py) │
+└──────────────────┘            └──────────────────┘
+        ▲                              │    │
+        │                 ┌────────────┘    └────────────┐
+        │                 ▼                              ▼
+        │      ┌──────────────────┐         ┌──────────────────┐
+        │      │ Azure AI Eval SDK│         │Azure AI Content  │
+        │      │  (Fluency, QA)   │         │     Safety       │
+        │      └──────────────────┘         └──────────────────┘
+        │
+   Traces + Eval Results
+```
+
+- **Traceloop SDK**: Auto-instrument LangChain/OpenAI calls to capture LLM input/output
+- **OTel Collector**: Forward traces to Langfuse and Azure Application Insights simultaneously
+- **Langfuse**: LLM observability dashboard
+- **Azure Application Insights**: Trace storage & query
+- **Azure Managed Grafana**: Custom dashboard visualization
+- **Evaluation Pipeline**: Automated quality & safety evaluation
+  - **Azure AI Evaluation SDK**: Fluency, Coherence, Relevance, Groundedness
+  - **Azure AI Content Safety**: Violence, Sexual, SelfHarm, Hate detection
+
+## 📁 Project Structure
+
+```
+otel-langfuse/
+├── main.py              # FastAPI server + OpenTelemetry initialization
+├── graph.py             # LangGraph workflow (Teacher-Student Quiz)
+├── config.py            # Configuration loader
+├── pyproject.toml       # Python dependencies (uv)
+├── templates/
+│   └── index.html       # Web UI
+├── static/
+│   └── style.css        # Stylesheet
+└── k8s/
+    ├── langfuse-values.yaml           # Langfuse Helm values
+    ├── otel-collector-values.yaml     # OTel Collector Helm values
+    └── azure-grafana-langgraph.json   # Azure Managed Grafana dashboard
+```
+
+## 🚀 Getting Started
+
+### 1. Environment Setup
+
+```bash
+cp .env.example .env
+vim .env
+```
+
+### 2. Install Dependencies
+
+```bash
+uv sync
+```
+
+### 3. Run Server
+
+```bash
+uv run main.py
+```
+
+Access http://localhost:8000 in your browser
+
+## 🎮 Demo App: Teacher-Student Quiz
+
+Quiz application built with LangGraph Multi-Agent system:
+
+- **Teacher Agent**: Creates questions and evaluates answers
+- **Student Agent**: Demonstrates problem-solving
+
+### Usage Example
+```
+User: "medium math problem"
+→ Teacher creates medium difficulty math problem
+→ Student answers with solution process
+→ Teacher evaluates the answer
+```
+
+## ☸️ Kubernetes Deployment
+
+### Install Langfuse
+
+```bash
+helm repo add langfuse https://langfuse.github.io/langfuse-k8s
+helm install langfuse langfuse/langfuse -f k8s/langfuse-values.yaml -n langfuse --create-namespace
+```
+
+### Install OpenTelemetry Collector
+
+```bash
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+helm repo update
+
+helm install otel-collector open-telemetry/opentelemetry-collector \
+    --namespace otel-system --create-namespace \
+    --values k8s/otel-collector-values.yaml
+```
+
+## 🔧 Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI endpoint | ✅ |
+| `AZURE_OPENAI_API_KEY` | Azure OpenAI API key | ✅ |
+| `AZURE_OPENAI_DEPLOYMENT_NAME` | Deployment name | ❌ (default: gpt-4o) |
+| `AZURE_OPENAI_API_VERSION` | API version | ❌ |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTel Collector gRPC address | ❌ (default: localhost:4317) |
+
+## 📝 License
+
+MIT

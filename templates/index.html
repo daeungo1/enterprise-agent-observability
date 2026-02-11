@@ -51,22 +51,22 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                 </div>
-                <h2 class="welcome-title">🎓 Teacher-Student 퀴즈</h2>
-                <p class="welcome-subtitle">Teacher가 문제를 출제하고, Student가 풀이합니다.<br>난이도와 영역을 선택해 시작하세요!</p>
+                <h2 class="welcome-title">🎓 Teacher-Student Quiz</h2>
+                <p class="welcome-subtitle">Teacher creates questions, Student solves them.<br>Choose difficulty and subject to start!<br>Teacher가 문제를 출제하고, Student가 풀이합니다.<br>난이도와 영역을 선택해 시작하세요!</p>
                 <div class="suggestions">
-                    <button class="suggestion" onclick="useSuggestion('쉬운 수학 문제')">🔢 쉬운 수학</button>
-                    <button class="suggestion" onclick="useSuggestion('보통 과학 문제')">🔬 보통 과학</button>
-                    <button class="suggestion" onclick="useSuggestion('어려운 역사 퀴즈')">📜 어려운 역사</button>
-                    <button class="suggestion" onclick="useSuggestion('쉬운 영어 문제')">🔤 쉬운 영어</button>
-                    <button class="suggestion" onclick="useSuggestion('보통 프로그래밍 퀴즈')">💻 보통 프로그래밍</button>
-                    <button class="suggestion" onclick="useSuggestion('쉬운 일반상식')">💡 쉬운 일반상식</button>
+                    <button class="suggestion" onclick="useSuggestion('easy math')">🔢 Easy Math / 쉬운 수학</button>
+                    <button class="suggestion" onclick="useSuggestion('medium science')">🔬 Medium Science / 보통 과학</button>
+                    <button class="suggestion" onclick="useSuggestion('hard history')">📜 Hard History / 어려운 역사</button>
+                    <button class="suggestion" onclick="useSuggestion('easy english')">🔤 Easy English / 쉬운 영어</button>
+                    <button class="suggestion" onclick="useSuggestion('medium programming')">💻 Medium Programming / 보통 프로그래밍</button>
+                    <button class="suggestion" onclick="useSuggestion('easy general')">💡 Easy General / 쉬운 일반상식</button>
                 </div>
             </div>
         </div>
         
         <div class="chat-input-container">
             <div class="input-wrapper">
-                <input type="text" class="chat-input" id="chatInput" placeholder="난이도와 영역을 입력하세요 (예: 보통 수학)" autocomplete="off">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Enter difficulty and subject (e.g., medium math) / 난이도와 영역을 입력하세요" autocomplete="off">
                 <button class="send-button" id="sendButton">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
@@ -90,7 +90,7 @@
         }
         
         function formatMessage(content) {
-            // Markdown bold를 HTML로 변환
+            // Convert Markdown bold to HTML / Markdown bold를 HTML로 변환
             return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         }
         
@@ -106,10 +106,10 @@
         
         function getNodeLabel(node) {
             const labels = {
-                'setup': '설정',
-                'teacher_question': 'Teacher 문제',
-                'student_answer': 'Student 답변',
-                'teacher_evaluate': 'Teacher 평가'
+                'setup': 'Setup / 설정',
+                'teacher_question': 'Teacher Question / Teacher 문제',
+                'student_answer': 'Student Answer / Student 답변',
+                'teacher_evaluate': 'Teacher Evaluate / Teacher 평가'
             };
             return labels[node] || node;
         }
@@ -123,7 +123,7 @@
             messageDiv.className = `message ${type}`;
             
             if (type === 'assistant' && node) {
-                // 노드별 스타일링
+                // Node-specific styling / 노드별 스타일링
                 messageDiv.classList.add(`node-${node}`);
             }
             
@@ -144,7 +144,7 @@
                 isFirstMessage = false;
             }
             
-            // 헤더 표시
+            // Display header / 헤더 표시
             if (label) {
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'agent-header';
@@ -189,7 +189,7 @@
             chatInput.disabled = true;
             
             try {
-                // SSE 스트리밍 사용
+                // Use SSE streaming / SSE 스트리밍 사용
                 const response = await fetch('/chat/stream', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -219,63 +219,65 @@
                                 if (data.type === 'session') {
                                     sessionId = data.session_id;
                                 } else if (data.type === 'node_start') {
+                                    // New node start - create message box with header
                                     // 새 노드 시작 - 헤더와 함께 메시지 박스 생성
                                     hideTypingIndicator();
                                     currentNode = data.node;
                                     currentContent = '';
                                     currentMessageDiv = createStreamingMessage(data.node, data.label);
                                 } else if (data.type === 'token') {
-                                    // 토큰 단위로 추가
+                                    // Add token by token / 토큰 단위로 추가
                                     if (currentMessageDiv && data.node === currentNode) {
                                         currentContent += data.content;
                                         currentMessageDiv.innerHTML = formatMessage(currentContent) + '<span class="cursor">▌</span>';
                                         chatMessages.scrollTop = chatMessages.scrollHeight;
                                     }
                                 } else if (data.type === 'node_end') {
-                                    // 노드 완료 - 커서 제거
+                                    // Node complete - remove cursor / 노드 완료 - 커서 제거
                                     if (currentMessageDiv) {
                                         currentMessageDiv.innerHTML = formatMessage(currentContent);
                                         currentMessageDiv.classList.remove('streaming');
                                     }
                                 } else if (data.type === 'waiting') {
-                                    // 다음 노드 대기 표시
+                                    // Show waiting for next node / 다음 노드 대기 표시
                                     showTypingIndicator(data.message);
                                 } else if (data.type === 'message') {
-                                    // 전체 메시지
+                                    // Full message / 전체 메시지
                                     hideTypingIndicator();
                                     currentNode = data.node;
                                     currentContent = data.content;
                                     
-                                    // 에이전트 노드인 경우 헤더 없이 직접 추가 (node_start에서 이미 추가됨)
+                                    // For agent nodes, add directly without header (already added in node_start)
+                                    // 에이전트 노드인 경우 헤더 없이 직접 추가
                                     if (['teacher_question', 'student_answer', 'teacher_evaluate'].includes(data.node)) {
                                         if (currentMessageDiv) {
                                             currentMessageDiv.innerHTML = formatMessage(currentContent);
                                         }
                                     } else {
-                                        // setup 등 다른 노드
+                                        // Other nodes like setup / setup 등 다른 노드
                                         currentMessageDiv = addMessage(currentContent, 'assistant', data.node);
                                     }
                                 } else if (data.type === 'done') {
                                     hideTypingIndicator();
-                                    // placeholder 업데이트
-                                    if (currentContent && currentContent.includes('다음 문제를 원하시면')) {
-                                        chatInput.placeholder = "'다음' 또는 '새로 시작' 입력";
-                                    } else if (currentContent && currentContent.includes('난이도')) {
-                                        chatInput.placeholder = "난이도와 영역을 입력하세요 (예: 보통 수학)";
+                                    // Update placeholder / placeholder 업데이트
+                                    if (currentContent && currentContent.includes('next question')) {
+                                        chatInput.placeholder = "Type 'next' or 'reset' / '다음' 또는 '새로 시작' 입력";
+                                    } else if (currentContent && currentContent.includes('difficulty')) {
+                                        chatInput.placeholder = "Enter difficulty and subject (e.g., medium math) / 난이도와 영역을 입력하세요";
                                     }
                                 } else if (data.type === 'error') {
                                     hideTypingIndicator();
-                                    addMessage(`오류: ${data.message}`, 'error');
+                                    addMessage(`Error: ${data.message} / 오류: ${data.message}`, 'error');
                                 }
                             } catch (e) {
-                                // JSON 파싱 에러 무시
+                                // Ignore JSON parsing errors / JSON 파싱 에러 무시
                             }
                         }
                     }
                 }
             } catch (error) {
                 hideTypingIndicator();
-                addMessage('오류가 발생했습니다. 다시 시도해 주세요.', 'error');
+                addMessage('An error occurred. Please try again. / 오류가 발생했습니다. 다시 시도해 주세요.', 'error');
                 console.error('Error:', error);
             } finally {
                 sendButton.disabled = false;
