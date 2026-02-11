@@ -2001,7 +2001,7 @@
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
-            "query": "customEvents\n| where name == \"evaluation_result\"\n| extend \n    Query = tostring(customDimensions['query']),\n    Fluency = todouble(customDimensions['quality_fluency']),\n    Coherence = todouble(customDimensions['quality_coherence']),\n    Violence = toint(customDimensions['safety_violence']),\n    Sexual = toint(customDimensions['safety_sexual']),\n    SelfHarm = toint(customDimensions['safety_self_harm']),\n    HateUnfairness = toint(customDimensions['safety_hate_unfairness'])\n| project timestamp, Query, Fluency, Coherence, Violence, Sexual, SelfHarm, HateUnfairness\n| order by timestamp desc\n| limit 100",
+            "query": "customEvents\n| where name == \"evaluation_result\"\n| extend \n    Query = tostring(customDimensions['query']),\n    Response = tostring(customDimensions['response']),\n    Fluency = todouble(customDimensions['quality_fluency']),\n    Coherence = todouble(customDimensions['quality_coherence']),\n    Relevance = todouble(customDimensions['quality_relevance']),\n    Groundedness = todouble(customDimensions['quality_groundedness']),\n    Violence = toint(customDimensions['safety_violence']),\n    Sexual = toint(customDimensions['safety_sexual']),\n    SelfHarm = toint(customDimensions['safety_self_harm']),\n    HateUnfairness = toint(customDimensions['safety_hate_unfairness'])\n| project timestamp, Query, Response, Fluency, Coherence, Relevance, Groundedness, Violence, Sexual, SelfHarm, HateUnfairness\n| order by timestamp desc\n| limit 100",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/microsoft.insights/components/$res"
             ],
