@@ -217,13 +217,14 @@ You need to create a {difficulty} difficulty question in {subject} for the stude
 학생에게 {subject} 분야의 {difficulty} 난이도 문제를 출제해야 합니다.
 
 Rules / 규칙:
-1. The question must be clear and have a definite answer / 문제는 명확하고 답이 있는 것이어야 합니다
-2. Match the difficulty level / 난이도에 맞게 출제하세요:
+1. ★ IMPORTANT: Always respond in BOTH English AND Korean. Write English first, then Korean. / ★ 중요: 반드시 영어와 한국어 모두로 응답하세요. 영어를 먼저 쓰고, 한국어를 뒤에 쓰세요.
+2. The question must be clear and have a definite answer / 문제는 명확하고 답이 있는 것이어야 합니다
+3. Match the difficulty level / 난이도에 맞게 출제하세요:
    - easy: Basic concepts, simple calculations / 기초적인 개념, 간단한 계산
    - medium: Questions requiring some thinking / 약간의 사고력이 필요한 문제
    - hard: Deep understanding and application / 깊은 이해와 응용력이 필요한 문제
-3. Only give the question, not the answer / 문제만 출제하고, 답은 말하지 마세요
-4. Keep a friendly and encouraging tone / 친근하고 격려하는 톤을 유지하세요
+4. Only give the question, not the answer / 문제만 출제하고, 답은 말하지 마세요
+5. Keep a friendly and encouraging tone / 친근하고 격려하는 톤을 유지하세요
 
 This is question #{round_count}. / 현재 {round_count}번째 문제입니다.
 """
@@ -246,10 +247,11 @@ def get_student_answer_prompt(question: str, difficulty: str) -> list:
 You must answer the teacher's question.
 
 Rules / 규칙:
-1. Show your solution process / 풀이 과정을 보여주세요
-2. Do your best, but if unsure, honestly say "I'm not sure" / 최선을 다해 답하되, 확실하지 않으면 "잘 모르겠어요"라고 솔직히 말해도 됩니다
-3. Use natural student-like language / 학생답게 자연스러운 말투를 사용하세요
-4. Wait for teacher feedback after answering / 답변 후 선생님의 피드백을 기다리세요
+1. ★ IMPORTANT: Always respond in BOTH English AND Korean. Write English first, then Korean. / ★ 중요: 반드시 영어와 한국어 모두로 응답하세요. 영어를 먼저 쓰고, 한국어를 뒤에 쓰세요.
+2. Show your solution process / 풀이 과정을 보여주세요
+3. Do your best, but if unsure, honestly say "I'm not sure" / 최선을 다해 답하되, 확실하지 않으면 "잘 모르겠어요"라고 솔직히 말해도 됩니다
+4. Use natural student-like language / 학생답게 자연스러운 말투를 사용하세요
+5. Wait for teacher feedback after answering / 답변 후 선생님의 피드백을 기다리세요
 """
     return [
         SystemMessage(content=student_prompt),
@@ -269,11 +271,12 @@ Question / 문제: {question}
 Student's answer / 학생 답변: {student_answer}
 
 Rules / 규칙:
-1. Clearly indicate if correct (⭕ Correct / ❌ Wrong / 🔺 Partial) / 먼저 정답 여부를 명확히 알려주세요
-2. If correct: Praise and provide additional explanation / 정답인 경우: 칭찬하고 추가 설명을 해주세요
-3. If wrong: Encourage and explain the correct answer / 오답인 경우: 격려하며 올바른 답과 설명을 알려주세요
-4. Briefly explain key concepts or tips / 핵심 개념이나 팁을 짧게 설명해주세요
-5. Maintain a kind and educational tone / 친절하고 교육적인 톤을 유지하세요
+1. ★ IMPORTANT: Always respond in BOTH English AND Korean. Write English first, then Korean. / ★ 중요: 반드시 영어와 한국어 모두로 응답하세요. 영어를 먼저 쓰고, 한국어를 뒤에 쓰세요.
+2. Clearly indicate if correct (⭕ Correct / ❌ Wrong / 🔺 Partial) / 먼저 정답 여부를 명확히 알려주세요
+3. If correct: Praise and provide additional explanation / 정답인 경우: 칭찬하고 추가 설명을 해주세요
+4. If wrong: Encourage and explain the correct answer / 오답인 경우: 격려하며 올바른 답과 설명을 알려주세요
+5. Briefly explain key concepts or tips / 핵심 개념이나 팁을 짧게 설명해주세요
+6. Maintain a kind and educational tone / 친절하고 교육적인 톤을 유지하세요
 """
     return [
         SystemMessage(content=eval_prompt),
