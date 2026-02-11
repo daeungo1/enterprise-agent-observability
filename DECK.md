@@ -108,7 +108,7 @@ SETUP → QUESTIONING → ANSWERING → EVALUATING → COMPLETE
 
 ## 3. Architecture Deep Dive
 
-### Overall Architecture
+### Conceptual Architecture
 
 ```
                           ┌───────────────────────────────────────────┐
@@ -137,6 +137,49 @@ SETUP → QUESTIONING → ANSWERING → EVALUATING → COMPLETE
 ```
 
 (Now here's the full architecture. The app sends traces via OTLP gRPC to the OpenTelemetry Collector running in Kubernetes. The Collector fans out to two destinations: Langfuse via OTLP HTTP for the LLM-specific trace UI, and Azure Application Insights via the Azure Monitor exporter for KQL-queryable storage. Then separately, the evaluation pipeline queries traces from App Insights, runs quality and safety evaluations, and writes the scores back to App Insights as custom events. Grafana reads both traces and evaluation results from App Insights via KQL.)
+
+### Logical Architecture
+
+```mermaid
+flowchart TB
+    subgraph App["LangGraph App"]
+        FastAPI["FastAPI Server :8000"]
+        LangGraph["LangGraph<br/>Teacher-Student"]
+        Traceloop["Traceloop SDK"]
+        AzureOAI["Azure OpenAI GPT-4o"]
+
+        FastAPI --> LangGraph
+        LangGraph --> AzureOAI
+        Traceloop -.->|auto instrument| LangGraph
+    end
+
+    subgraph K8s["Kubernetes"]
+        OTelCollector["OTel Collector :4317"]
+        Langfuse["Langfuse"]
+    end
+
+    subgraph Observability["Azure Observability"]
+        AppInsights["Application Insights"]
+        Grafana["Managed Grafana"]
+    end
+
+    subgraph Evaluation["Evaluation Pipeline"]
+        EvalScript["evaluation.py"]
+        AIEval["Azure AI Evaluation<br/>(Fluency, QA)"]
+        ContentSafety["Azure AI Content Safety<br/>(Violence, Sexual, etc.)"]
+    end
+
+    Traceloop -->|OTLP/gRPC| OTelCollector
+    OTelCollector -->|OTLP/HTTP| Langfuse
+    OTelCollector -->|Azure Monitor| AppInsights
+    AppInsights -->|Traces + Eval Results| Grafana
+    AppInsights -->|Query Traces| EvalScript
+    EvalScript -->|Quality| AIEval
+    EvalScript -->|Safety| ContentSafety
+    EvalScript -->|Store Results| AppInsights
+```
+
+(This is the same architecture as a logical diagram showing the four subsystems. On the left, the LangGraph App where FastAPI drives the agent workflow and Traceloop auto-instruments it. In the middle, Kubernetes hosts both the OTel Collector and Langfuse. On the right, Azure services — App Insights and Grafana. And at the bottom, the evaluation pipeline that closes the loop by reading traces and writing scores back. Notice how App Insights sits at the center, receiving data from both the Collector and the evaluation pipeline, and feeding Grafana.)
 
 ### Data Flow Detail
 
