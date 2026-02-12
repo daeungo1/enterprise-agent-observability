@@ -37,7 +37,7 @@ flowchart TB
         Grafana["Managed Grafana"]
     end
     
-    subgraph Evaluation["Batch Evaluation"]
+    subgraph Evaluation["Evaluation (Async + Batch)"]
         EvalScript["evaluation.py"]
         AIEval["Azure AI Evaluation\n(Fluency, QA)"]
         ContentSafety["Azure AI Content Safety\n(Violence, Sexual, etc.)"]
@@ -174,7 +174,7 @@ flowchart TB
         Grafana["Managed Grafana"]
     end
     
-    subgraph Evaluation["Batch Evaluation"]
+    subgraph Evaluation["Evaluation (Async + Batch)"]
         EvalScript["evaluation.py"]
         AIEval["Azure AI Evaluation\n(Fluency, QA)"]
         ContentSafety["Azure AI Content Safety\n(Violence, Sexual, etc.)"]

@@ -28,9 +28,9 @@ LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collecto
               ┌────────────┘    └────────────┐             │
               ▼                              ▼             │
  ┌──────────────────┐            ┌──────────────────┐      │
- │  Azure Managed   │            │ Batch Evaluation │──────┘
- │     Grafana      │            │    Pipeline      │(Results)
- │   (Dashboard)    │            │ (evaluation.py)  │
+ │  Azure Managed   │            │   Evaluation     │──────┘
+ │     Grafana      │            │ (Async + Batch)  │(Results)
+ │   (Dashboard)    │            │  evaluation.py   │
  └──────────────────┘            └──────────────────┘
                                         │    │
                            ┌────────────┘    └────────────┐
@@ -46,8 +46,8 @@ LangGraph 기반 Teacher-Student 퀴즈 시스템에서 **OpenTelemetry Collecto
 - **Langfuse**: LLM observability dashboard
 - **Azure Application Insights**: Trace storage & query (traces + evaluation results)
 - **Azure Managed Grafana**: Custom dashboard visualization
-- **eval_background.py**: Per-request async evaluation → sends results directly to App Insights
-- **Batch Evaluation Pipeline** (evaluation.py): Historical batch evaluation
+- **eval_background.py**: Per-request async evaluation (default) → sends results directly to App Insights
+- **Batch Evaluation Pipeline** (evaluation.py): Historical batch evaluation (optional)
   - **Azure AI Evaluation SDK**: Fluency, Coherence, Relevance, Groundedness
   - **Azure AI Content Safety**: Violence, Sexual, SelfHarm, Hate detection
 
@@ -260,9 +260,9 @@ LangGraph-based Teacher-Student Quiz System that sends LLM observability data to
               ┌────────────┘    └────────────┐             │
               ▼                              ▼             │
  ┌──────────────────┐            ┌──────────────────┐      │
- │  Azure Managed   │            │ Batch Evaluation │──────┘
- │     Grafana      │            │    Pipeline      │(Results)
- │   (Dashboard)    │            │ (evaluation.py)  │
+ │  Azure Managed   │            │   Evaluation     │──────┘
+ │     Grafana      │            │ (Async + Batch)  │(Results)
+ │   (Dashboard)    │            │  evaluation.py   │
  └──────────────────┘            └──────────────────┘
                                         │    │
                            ┌────────────┘    └────────────┐
@@ -278,8 +278,8 @@ LangGraph-based Teacher-Student Quiz System that sends LLM observability data to
 - **Langfuse**: LLM observability dashboard
 - **Azure Application Insights**: Trace storage & query (traces + evaluation results)
 - **Azure Managed Grafana**: Custom dashboard visualization
-- **eval_background.py**: Per-request async evaluation → sends results directly to App Insights
-- **Batch Evaluation Pipeline** (evaluation.py): Historical batch evaluation
+- **eval_background.py**: Per-request async evaluation (default) → sends results directly to App Insights
+- **Batch Evaluation Pipeline** (evaluation.py): Historical batch evaluation (optional)
   - **Azure AI Evaluation SDK**: Fluency, Coherence, Relevance, Groundedness
   - **Azure AI Content Safety**: Violence, Sexual, SelfHarm, Hate detection
 
