@@ -17,7 +17,7 @@
 
 ## 1. Why LLM Observability?
 
-### The Problem
+### ⚠️ The Problem
 
 LLM-based apps are fundamentally different from traditional apps:
 
@@ -27,7 +27,7 @@ LLM-based apps are fundamentally different from traditional apps:
 - **Cost & performance tracking**: Token usage and latency need monitoring
 - **Safety**: Must automatically detect harmful content generation
 
-### What This Project Solves
+### ✅ What This Project Solves
 
 ```
 "We built an LLM app... but is it actually working well?"
@@ -179,7 +179,7 @@ flowchart TB
 | 5 | evaluation.py | App Insights | opencensus (customEvents) | Batch evaluation scores (quality + safety) |
 | 6 | App Insights | Grafana | KQL query | Traces + evaluation results visualization |
 
-### Why Use OTel Collector?
+### 🔥 Why Use OTel Collector?
 
 **Without Collector (direct export)**
 ```
@@ -247,7 +247,7 @@ Traceloop.init(
 )
 ```
 
-**Key point**: Traceloop SDK auto-instruments LangChain/OpenAI calls.
+✅ **Key point**: Traceloop SDK auto-instruments LangChain/OpenAI calls.
 Without any code changes, `gen_ai.prompt`, `gen_ai.completion`, and `llm.usage.total_tokens` are captured automatically.
 
 ### 4-2. Manual Span Enrichment (main.py - chat_stream)
@@ -268,7 +268,7 @@ with tracer.start_as_current_span("chat_stream") as span:
     span.set_attribute("langfuse.trace.output", final_output)
 ```
 
-**Key point**: Setting `langfuse.*` prefix attributes enables trace/session grouping in the Langfuse UI.
+✅ **Key point**: Setting `langfuse.*` prefix attributes enables trace/session grouping in the Langfuse UI.
 
 ### 4-3. Evaluation Pipeline (evaluation.py)
 
@@ -298,7 +298,7 @@ logger.info("evaluation_result", extra={"custom_dimensions": event_properties})
 # → Queryable via KQL in Grafana
 ```
 
-### 4-4. Real-time Background Evaluation (eval_background.py)
+### 4-4. 🔥 Real-time Background Evaluation (eval_background.py)
 
 ```python
 # In main.py — after returning the response to the user:
@@ -318,7 +318,7 @@ def evaluate_single(query: str, response: str) -> dict:
     logger.info("evaluation_result", extra={"custom_dimensions": result})
 ```
 
-**Key point**: Every chat response triggers evaluation automatically. No manual pipeline run needed for near real-time monitoring.
+✅ **Key point**: Every chat response triggers evaluation automatically. No manual pipeline run needed for near real-time monitoring.
 
 ### 4-5. Evaluation ↔ Observability Connection
 
@@ -414,7 +414,7 @@ uv run python evaluation.py --hours 24 --limit 100
 
 ---
 
-## Key Takeaways
+## 🚀 Key Takeaways
 
 1. **OpenTelemetry works for LLM apps too**
    - Traceloop SDK auto-instruments LangChain/OpenAI
@@ -428,7 +428,7 @@ uv run python evaluation.py --hours 24 --limit 100
    - Tracing alone is not enough → automated quality/safety evaluation is essential
    - Store evaluation results back in App Insights → unified view in Grafana
 
-4. **Production considerations**
+4. **⚠️ Production considerations**
    - Set `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT` higher (LLM messages are long)
    - Enable `TRACELOOP_TRACE_CONTENT=true` (disabled by default)
    - Run evaluation as a batch job (CI/CD or cron)
